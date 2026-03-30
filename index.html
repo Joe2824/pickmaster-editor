@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PickMaster Container Konfigurator</title>
+    <script type="module" src="/src/main.js"></script>
+    <link href="/src/style.css" rel="stylesheet">
+    <style>
+        [x-cloak] { display: none !important; }
+        .no-select { user-select: none; }
+        body { overflow: hidden; } 
+    </style>
+</head>
+<body class="bg-gray-50 h-screen flex flex-col font-sans" x-data="pickmasterApp()" 
+      @keydown.window="handleKeyDown($event)"
+      @mousemove.window="onDrag($event)"
+      @mouseup.window="stopDrag()">
+
+    <!-- Header -->
+    <header class="bg-blue-600 text-white p-4 shadow-md flex justify-between items-center z-10">
+        <h1 class="text-xl font-bold">PickMaster 2D Konfigurator</h1>
+        
+        <div class="flex items-center space-x-4">
+            <!-- Autosave Indikator -->
+            <div x-show="lastSaved" x-transition class="text-blue-200 text-xs flex items-center gap-1.5 bg-blue-700 px-2 py-1 rounded">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                <span>Lokal gespeichert: <span x-text="lastSaved"></span></span>
+            </div>
+
+            <div class="space-x-2">
+                <input type="file" id="fileInput" accept=".json" @change="loadFile" class="hidden">
+                <button @click="document.getElementById('fileInput').click()" class="cursor-pointer bg-blue-500 hover:bg-blue-400 px-4 py-2 rounded shadow transition text-sm">JSON Laden</button>
+                <button x-show="jsonData" @click="saveFile" class="cursor-pointer bg-green-500 hover:bg-green-400 px-4 py-2 rounded shadow transition font-bold text-sm">JSON Exportieren</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 overflow-hidden flex" x-show="jsonData" x-cloak>
+        
+        <!-- Linke Seite: Grafische Darstellung -->
+        <div class="w-2/3 p-4 flex flex-col h-full border-r border-gray-200 bg-gray-100">
+            <div class="flex justify-between items-center mb-2">
+                <h2 class="text-lg font-semibold flex items-center gap-4">
+                    <span>Visualisierung (<span x-text="width"></span> x <span x-text="height"></span>)</span>
+
+                    <!-- Legende -->
+                    <div class="flex gap-2 text-xs font-normal border-l pl-4 border-gray-300">
+                        <template x-for="(color, id) in itemColors" :key="id">
+                            <div class="flex items-center gap-1 bg-white px-2 py-1 rounded shadow-sm border border-gray-200">
+                                <div class="w-3 h-3 rounded-sm" :class="color.bg"></div>
+                                <span class="text-gray-600 truncate w-16" :title="id" x-text="id"></span>
+                            </div>
+                        </template>
+                    </div>
+                </h2>
+                <div class="flex items-center space-x-2">
+                    <span x-show="showMouseCoords && !selectedItem" x-transition class="text-blue-700 bg-blue-100 px-2 py-0.5 rounded text-sm font-mono border border-blue-200">
+                        X <span x-text="mouseX"></span> | Y <span x-text="mouseY"></span>
+                    </span>
+                    <button @click="toggleDragMode" 
+                            :class="dragMode ? 'bg-orange-500 hover:bg-orange-600' : 'bg-gray-400 hover:bg-gray-500'" 
+                            class="cursor-pointer text-white px-3 py-1 rounded shadow transition text-xs font-medium flex items-center gap-2">
+                        <span>Drag & Drop: <span x-text="dragMode ? 'AN' : 'AUS'"></span></span>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="flex-1 overflow-auto relative rounded flex items-center justify-center bg-gray-200 border shadow-inner p-4">                
+                <div x-ref="drawingArea" class="relative bg-white shadow-sm cursor-crosshair border border-gray-400" 
+                     @click="selectedItem = null"
+                     @mousemove="updateMouseCoords($event)"
+                     @mouseenter="showMouseCoords = true"
+                     @mouseleave="showMouseCoords = false"
+                     :style="`width: 100%; max-width: 800px; aspect-ratio: ${width} / ${height};
+                              background-size: ${(100 / width) * 100}% ${(100 / height) * 100}%;
+                              background-image: linear-gradient(to right, #e5e7eb 1px, transparent 1px), linear-gradient(to bottom, #e5e7eb 1px, transparent 1px);`">
+                    
+                    <template x-for="item in items" :key="item.Id">
+                        <div class="absolute transition-transform transform -translate-x-1/2 -translate-y-1/2 no-select"
+                             :style="`left: ${(item.X / width) * 100}%; top: ${(item.Y / height) * 100}%;`"
+                             :class="(selectedItem && selectedItem.Id === item.Id ? 'z-20 scale-125 ' : 'z-10 hover:scale-110 ') + 
+                                     (dragMode ? 'cursor-move ' : 'cursor-pointer ') + 
+                                     (isDragging && draggedItem && draggedItem.Id === item.Id ? 'opacity-75 ' : 'duration-200')"
+                             @mousedown.prevent.stop="startDrag($event, item)"
+                             @click.stop="selectItem(item)"
+                             :title="`Order: ${item.Order} | X: ${item.X}, Y: ${item.Y} | RZ: ${item.RZ}°${hasDuplicateOrder(item.Order) ? '\nACHTUNG: Diese Order-Nummer existiert mehrfach!' : ''}`">
+                             
+                             <div class="flex items-center justify-center shadow-md relative overflow-hidden transition-all duration-200 rounded-sm border"
+                                  :style="`width: 44px; height: 26px; transform: rotate(${item.RZ || 0}deg);`"
+                                  :class="(selectedItem && selectedItem.Id === item.Id) 
+                                            ? 'bg-red-500 text-white border-red-700 border-2' 
+                                            : `${getItemColorClass(item.ItemId).bg} ${getItemColorClass(item.ItemId).text} ${getItemColorClass(item.ItemId).border}`">
+                                  
+                                  <div class="absolute right-0 top-0 bottom-0 w-1.5" 
+                                       :class="(selectedItem && selectedItem.Id === item.Id) ? 'bg-red-800' : getItemColorClass(item.ItemId).indicator">
+                                  </div>
+
+                                  <span class="text-xs font-bold pointer-events-none px-1 rounded-sm" 
+                                        :class="hasDuplicateOrder(item.Order) && !(selectedItem && selectedItem.Id === item.Id) ? 'bg-yellow-400 text-red-700 border border-red-500 animate-pulse' : ''"
+                                        x-text="item.Order"></span>
+                             </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rechte Seite: Eigenschaften & Listen-Ansicht -->
+        <div class="w-1/3 flex flex-col h-full bg-white">
+            
+            <div class="p-4 border-b border-gray-200 bg-gray-50 flex-none" style="height: 55%;">
+                <h2 class="text-lg font-semibold mb-4 text-gray-800">Eigenschaften bearbeiten</h2>
+                
+                <template x-if="selectedItem">
+                    <div class="space-y-3 h-full overflow-y-auto pb-4">
+                        <div class="flex flex-col">
+                            <label class="text-sm font-medium text-gray-600">Slot-ID (Eindeutige Platz-ID)</label>
+                            <input type="text" readonly x-model="selectedItem.Id" class="border p-1.5 bg-gray-100 rounded text-xs text-gray-500 focus:outline-none">
+                        </div>
+                        
+                        <div class="flex flex-col">
+                            <label class="text-sm font-medium text-gray-700">Zu platzierendes Produkt (ItemId)</label>
+                            <select x-model="selectedItem.ItemId" class="border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none flex-1 text-sm bg-white">
+                                <template x-for="id in uniqueItemIds" :key="id">
+                                    <option :value="id" x-text="id"></option>
+                                </template>
+                            </select>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="flex flex-col">
+                                <label class="text-sm font-medium text-gray-700">X Position</label>
+                                <input type="number" step="0.1" x-model.number="selectedItem.X" class="border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none transition">
+                            </div>
+                            <div class="flex flex-col">
+                                <label class="text-sm font-medium text-gray-700">Y Position</label>
+                                <input type="number" step="0.1" x-model.number="selectedItem.Y" class="border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none transition">
+                            </div>
+                            <div class="flex flex-col">
+                                <label class="text-sm font-medium text-gray-700">Z Rotation (RZ°)</label>
+                                <input type="number" step="0.1" x-model.number="selectedItem.RZ" class="border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none transition">
+                            </div>
+                            <div class="flex flex-col">
+                                <label class="text-sm font-medium text-gray-700 flex items-center justify-between">
+                                    <span>Order (Nummer)</span>
+                                    <span x-show="hasDuplicateOrder(selectedItem.Order)" class="text-red-500 text-xs font-bold animate-pulse" title="Diese Nummer ist doppelt vergeben!">⚠️ DUPLIKAT</span>
+                                </label>
+                                <input type="number" x-model.number="selectedItem.Order" 
+                                       class="border p-2 rounded outline-none transition"
+                                       :class="hasDuplicateOrder(selectedItem.Order) ? 'border-red-500 focus:ring-2 focus:ring-red-500 bg-red-50' : 'focus:ring-2 focus:ring-blue-500'">
+                            </div>
+                        </div>
+                        
+                        <!-- Aktions-Buttons -->
+                        <div class="pt-2 flex gap-2">
+                            <button @click="duplicateSelectedItem" class="cursor-pointer w-1/2 bg-blue-50 hover:bg-blue-500 text-blue-600 hover:text-white font-semibold py-2 rounded border border-blue-200 transition">
+                                Duplizieren
+                            </button>
+                            <button @click="deleteSelectedItem" class="cursor-pointer w-1/2 bg-red-50 hover:bg-red-500 text-red-600 hover:text-white font-semibold py-2 rounded border border-red-200 transition">
+                                Löschen
+                            </button>
+                        </div>
+                    </div>
+                </template>
+                
+                <template x-if="!selectedItem">
+                    <div class="h-full flex flex-col items-center justify-center text-center px-4 space-y-2">
+                        <svg class="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"></path></svg>
+                        <p class="text-gray-400 text-sm">Wähle ein Rechteck in der Visualisierung oder aus der Liste, um dessen Werte anzupassen.</p>
+                    </div>
+                </template>
+            </div>
+
+            <div class="p-4 flex flex-col flex-1 overflow-hidden">
+                <div class="flex justify-between items-center mb-3">
+                    <h2 class="text-lg font-semibold text-gray-800">Element-Liste (<span x-text="items.length"></span>)</h2>
+                    <button @click="addNewItem" class="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded shadow text-sm transition font-medium">+ Neues Item</button>
+                </div>
+                
+                <div class="flex-1 overflow-y-auto border border-gray-200 rounded shadow-inner bg-white">
+                    <ul class="divide-y divide-gray-100">
+                        <template x-for="item in items" :key="item.Id">
+                            <li 
+                                @click="selectItem(item)" 
+                                class="p-2 cursor-pointer transition-colors flex justify-between items-center hover:bg-blue-50"
+                                :class="(selectedItem && selectedItem.Id === item.Id) ? 'bg-blue-50 border-l-4 border-blue-500' : (hasDuplicateOrder(item.Order) ? 'bg-red-50 border-l-4 border-red-500' : 'border-l-4 border-transparent')"
+                            >
+                                <div class="flex items-center gap-3 w-full">
+                                    <div class="w-2 h-2 rounded-full flex-none" :class="getItemColorClass(item.ItemId).indicator"></div>
+                                    <div class="flex-1 flex items-center gap-2">
+
+                                        <div class="font-bold text-sm" :class="hasDuplicateOrder(item.Order) ? 'text-red-600' : 'text-gray-700'">
+                                            #<span x-text="item.Order"></span>
+                                            <span x-show="hasDuplicateOrder(item.Order)" title="Nummer doppelt vergeben!">⚠️</span>
+                                        </div>
+                                        <div class="text-xs text-gray-400 truncate w-24" :title="item.ItemId" x-text="item.ItemId"></div>
+                                    </div>
+                                    <div class="text-xs text-gray-500 border bg-white px-1.5 py-0.5 rounded flex-none shadow-sm">
+                                        X: <span x-text="item.X"></span> | Y: <span x-text="item.Y"></span>
+                                    </div>
+                                </div>
+                            </li>
+                        </template>
+                    </ul>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Start-Bildschirm -->
+    <div x-show="!jsonData" class="flex-1 flex flex-col items-center justify-center bg-gray-100 p-4">
+        <div class="text-center p-8 bg-white shadow-lg rounded-xl border border-gray-200 max-w-lg w-full">
+            <svg class="mx-auto h-12 w-12 text-blue-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            </svg>
+            <h3 class="text-2xl font-bold text-gray-900 mb-2">PickMaster Konfigurator</h3>
+            <p class="text-gray-500 mb-6">Lade deine PickMaster .json Datei, um den Editor zu starten.</p>
+            
+            <button @click="document.getElementById('fileInput').click()" class="cursor-pointer w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg shadow transition mb-4">
+                JSON Datei auswählen
+            </button>
+
+            <!-- Letzte Sitzung wiederherstellen -->
+            <div x-show="hasSavedSession" x-cloak class="mt-4 pt-4 border-t border-gray-100">
+                <p class="text-sm text-gray-600 mb-3">Es wurde ein ungespeicherter Entwurf gefunden.</p>
+                <div class="flex gap-2">
+                    <button type="button" @click="restoreSession()" class="cursor-pointer flex-1 bg-green-100 hover:bg-green-200 text-green-800 font-medium py-2 px-4 rounded transition border border-green-300">
+                        Wiederherstellen
+                    </button>
+                    <button @click="clearSession()" class="cursor-pointer bg-gray-100 hover:bg-gray-200 text-gray-600 py-2 px-3 rounded transition border border-gray-300" title="Entwurf löschen">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Datenschutz-Hinweis -->
+        <div class="mt-8 text-center max-w-md">
+            <p class="text-xs text-gray-400 flex items-center justify-center gap-1.5">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                <span><strong>Privatsphäre & Datenschutz:</strong> Alle Änderungen werden ausschließlich lokal in deinem Browser verarbeitet. Es findet kein Upload auf einen Server statt.</span>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        function pickmasterApp() {
+            return {
+                jsonData: null,
+                items: [],
+                selectedItem: null,
+                width: 1000,
+                height: 1000,
+                
+                uniqueItemIds: [],
+                colorPalettes: [
+                    { bg: 'bg-blue-100', text: 'text-blue-900', border: 'border-blue-400', indicator: 'bg-blue-600' },
+                    { bg: 'bg-green-100', text: 'text-green-900', border: 'border-green-400', indicator: 'bg-green-600' },
+                    { bg: 'bg-yellow-100', text: 'text-yellow-900', border: 'border-yellow-400', indicator: 'bg-yellow-600' },
+                    { bg: 'bg-purple-100', text: 'text-purple-900', border: 'border-purple-400', indicator: 'bg-purple-600' },
+                    { bg: 'bg-pink-100', text: 'text-pink-900', border: 'border-pink-400', indicator: 'bg-pink-600' }
+                ],
+                itemColors: {},
+
+                dragMode: false,
+                isDragging: false,
+                draggedItem: null,
+                dragStartX: 0,
+                dragStartY: 0,
+                initialItemX: 0,
+                initialItemY: 0,
+
+                mouseX: 0,
+                mouseY: 0,
+                showMouseCoords: false,
+
+                hasSavedSession: false,
+                lastSaved: '',
+                autosaveTimeout: null,
+
+                init() {
+                    try {
+                        if (localStorage.getItem('pickmaster_autosave')) {
+                            this.hasSavedSession = true;
+                        }
+                    } catch(e) {}
+
+                    this.$watch('jsonData', (value) => {
+                        if (value) {
+                            this.triggerAutosave();
+                        }
+                    }, { deep: true });
+                },
+
+                hasDuplicateOrder(orderNumber) {
+                    if (orderNumber === undefined || orderNumber === null || orderNumber === "") return false;
+                    let count = 0;
+                    for (let i = 0; i < this.items.length; i++) {
+                        if (this.items[i].Order === orderNumber) {
+                            count++;
+                        }
+                        if (count > 1) return true; // Sobald wir mehr als eine finden, ist es ein Duplikat
+                    }
+                    return false;
+                },
+
+                triggerAutosave() {
+                    clearTimeout(this.autosaveTimeout);
+                    this.autosaveTimeout = setTimeout(() => {
+                        try {
+                            localStorage.setItem('pickmaster_autosave', JSON.stringify(this.jsonData));
+                            this.lastSaved = new Date().toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+                            this.hasSavedSession = true;
+                        } catch (e) {
+                            console.warn("Autosave fehlgeschlagen (Storage evtl. voll oder blockiert).");
+                        }
+                    }, 500); 
+                },
+
+                restoreSession() {
+                    try {
+                        const saved = localStorage.getItem('pickmaster_autosave');
+                        if (saved) {
+                            this.jsonData = JSON.parse(saved);
+                            this.items = this.jsonData.ContainerPattern.Layers.$values[0].ArrangedItems.$values;
+                            
+                            if(this.jsonData.Size) {
+                                this.width = this.jsonData.Size.x;
+                                this.height = this.jsonData.Size.y;
+                            }
+                            
+                            this.extractItemIdsAndAssignColors();
+                            this.selectedItem = null;
+                            this.lastSaved = new Date().toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+                        }
+                    } catch(e) {
+                        alert("Fehler beim Wiederherstellen der Sitzung. Die Daten sind möglicherweise beschädigt.");
+                        this.clearSession();
+                    }
+                },
+
+                clearSession() {
+                    try {
+                        localStorage.removeItem('pickmaster_autosave');
+                        this.hasSavedSession = false;
+                    } catch(e) {}
+                },
+
+                toggleDragMode() {
+                    this.dragMode = !this.dragMode;
+                },
+
+                startDrag(e, item) {
+                    if (!this.dragMode) return;
+                    this.isDragging = true;
+                    this.draggedItem = item;
+                    this.selectItem(item);
+                    this.dragStartX = e.clientX;
+                    this.dragStartY = e.clientY;
+                    this.initialItemX = item.X;
+                    this.initialItemY = item.Y;
+                },
+
+                onDrag(e) {
+                    if (!this.isDragging || !this.draggedItem) return;
+
+                    const container = this.$refs.drawingArea;
+                    const rect = container.getBoundingClientRect();
+
+                    const dx = e.clientX - this.dragStartX;
+                    const dy = e.clientY - this.dragStartY;
+
+                    const scaleX = this.width / rect.width;
+                    const scaleY = this.height / rect.height;
+
+                    let newX = this.initialItemX + (dx * scaleX);
+                    let newY = this.initialItemY + (dy * scaleY);
+
+                    if (newX < 0) newX = 0;
+                    if (newX > this.width) newX = this.width;
+                    if (newY < 0) newY = 0;
+                    if (newY > this.height) newY = this.height;
+
+                    this.draggedItem.X = parseFloat(newX.toFixed(1));
+                    this.draggedItem.Y = parseFloat(newY.toFixed(1));
+                },
+
+                stopDrag() {
+                    this.isDragging = false;
+                    this.draggedItem = null;
+                },
+
+                updateMouseCoords(e) {
+                    if(!this.$refs.drawingArea) return;
+                    
+                    const rect = this.$refs.drawingArea.getBoundingClientRect();
+                    const scaleX = this.width / rect.width;
+                    const scaleY = this.height / rect.height;
+                    
+                    let x = (e.clientX - rect.left) * scaleX;
+                    let y = (e.clientY - rect.top) * scaleY;
+                    
+                    if (x < 0) x = 0; if (x > this.width) x = this.width;
+                    if (y < 0) y = 0; if (y > this.height) y = this.height;
+                    
+                    this.mouseX = x.toFixed(1);
+                    this.mouseY = y.toFixed(1);
+                },
+
+                handleKeyDown(e) {
+                    if (!this.selectedItem) return;
+
+                    const activeTag = document.activeElement.tagName.toUpperCase();
+                    if (['INPUT', 'TEXTAREA', 'SELECT'].includes(activeTag)) return;
+
+                    if (e.key === 'Delete' || e.key === 'Backspace') {
+                        e.preventDefault();
+                        this.deleteSelectedItem();
+                        return;
+                    }
+
+                    const step = e.shiftKey ? 10 : 1;
+                    
+                    if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        this.selectedItem.Y = parseFloat((this.selectedItem.Y - step).toFixed(1));
+                    } else if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        this.selectedItem.Y = parseFloat((this.selectedItem.Y + step).toFixed(1));
+                    } else if (e.key === 'ArrowLeft') {
+                        e.preventDefault();
+                        this.selectedItem.X = parseFloat((this.selectedItem.X - step).toFixed(1));
+                    } else if (e.key === 'ArrowRight') {
+                        e.preventDefault();
+                        this.selectedItem.X = parseFloat((this.selectedItem.X + step).toFixed(1));
+                    }
+                },
+
+                loadFile(event) {
+                    const file = event.target.files[0];
+                    if (!file) return;
+
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        try {
+                            this.jsonData = JSON.parse(e.target.result);
+                            this.items = this.jsonData.ContainerPattern.Layers.$values[0].ArrangedItems.$values;
+                            
+                            if(this.jsonData.Size) {
+                                this.width = this.jsonData.Size.x;
+                                this.height = this.jsonData.Size.y;
+                            }
+                            
+                            this.extractItemIdsAndAssignColors();
+                            this.selectedItem = null;
+                            
+                            this.triggerAutosave();
+                            
+                        } catch (error) {
+                            alert("Die Datei konnte nicht gelesen werden. Ist es eine gültige JSON?");
+                        }
+                    };
+                    reader.readAsText(file);
+                },
+
+                extractItemIdsAndAssignColors() {
+                    const ids = new Set();
+                    this.items.forEach(item => ids.add(item.ItemId));
+                    this.uniqueItemIds = Array.from(ids);
+                    
+                    this.itemColors = {};
+                    this.uniqueItemIds.forEach((id, index) => {
+                        this.itemColors[id] = this.colorPalettes[index % this.colorPalettes.length];
+                    });
+                },
+
+                getItemColorClass(itemId) {
+                    if (this.itemColors[itemId]) {
+                        return this.itemColors[itemId];
+                    }
+                    return { bg: 'bg-gray-200', text: 'text-gray-800', border: 'border-gray-400', indicator: 'bg-gray-600' };
+                },
+
+                selectItem(item) {
+                    this.selectedItem = item;
+                },
+
+                generateUUID() {
+                    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                        const r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                        return v.toString(16);
+                    });
+                },
+
+                addNewItem() {
+                    const maxOrder = this.items.length > 0 ? Math.max(...this.items.map(i => i.Order)) : 0;
+                    const defaultItemId = this.uniqueItemIds.length > 0 ? this.uniqueItemIds[0] : "";
+
+                    const newItem = {
+                        "$type": "PickMaster.Core.Process.Container.ArrangedItemModel, PickMaster.Core",
+                        "ItemId": defaultItemId,
+                        "X": parseFloat((this.width / 2).toFixed(1)), 
+                        "Y": parseFloat((this.height / 2).toFixed(1)),
+                        "Z": 0.0,
+                        "RX": 0.0,
+                        "RY": 0.0,
+                        "RZ": 0.0,
+                        "Order": maxOrder + 1,
+                        "Id": this.generateUUID()
+                    };
+                    
+                    this.items.push(newItem);
+                    this.selectItem(newItem);
+                },
+
+                duplicateSelectedItem() {
+                    if (!this.selectedItem) return;
+                    
+                    // Um zu verhindern, dass die neue Box sofort einen "Duplikat"-Warnhinweis hat,
+                    // berechnen wir die nächste freie Order-Nummer für die Kopie.
+                    const maxOrder = this.items.length > 0 ? Math.max(...this.items.map(i => i.Order)) : 0;
+                    
+                    const clonedItem = {
+                        "$type": "PickMaster.Core.Process.Container.ArrangedItemModel, PickMaster.Core",
+                        "ItemId": this.selectedItem.ItemId,
+                        "X": parseFloat((this.selectedItem.X + 20).toFixed(1)),
+                        "Y": parseFloat((this.selectedItem.Y + 20).toFixed(1)),
+                        "Z": this.selectedItem.Z,
+                        "RX": this.selectedItem.RX,
+                        "RY": this.selectedItem.RY,
+                        "RZ": this.selectedItem.RZ,
+                        "Order": maxOrder + 1,
+                        "Id": this.generateUUID()
+                    };
+                    
+                    this.items.push(clonedItem);
+                    this.selectItem(clonedItem);
+                },
+
+                deleteSelectedItem() {
+                    if (!this.selectedItem) return;
+                    
+                    if (confirm("Dieses Element wirklich löschen?")) {
+                        const index = this.items.findIndex(i => i.Id === this.selectedItem.Id);
+                        if (index > -1) {
+                            this.items.splice(index, 1);
+                        }
+                        this.selectedItem = null;
+                    }
+                },
+
+                saveFile() {
+                    const dataStr = JSON.stringify(this.jsonData, null, 2);
+                    const blob = new Blob([dataStr], { type: "application/json" });
+                    const url = URL.createObjectURL(blob);
+                    
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = this.jsonData.Name ? `${this.jsonData.Name}_mod.json` : "ContainerModel_mod.json";
+                    document.body.appendChild(link);
+                    link.click();
+                    
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
+                }
+            }
+        }
+    </script>
+</body>
+</html>
