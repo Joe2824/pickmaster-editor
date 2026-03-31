@@ -1302,30 +1302,26 @@
               filesProcessed++;
               // Wenn alle Dateien durchgelaufen sind, machen wir den Check
               if (filesProcessed === files.length) {
-                if (
-                  uploadedIds.length > 0 &&
-                  !matchedAtLeastOne &&
-                  this.uniqueItemIds.length > 0
-                ) {
+                if (uploadedIds.length > 0 && !matchedAtLeastOne && this.uniqueItemIds.length > 0) {
                   alert(
                     `Achtung: Keine der hochgeladenen Item-IDs passt zu diesem Container!\n\n` +
-                      `Hochgeladene IDs: ${uploadedIds.join(', ')}\n` +
-                      `Im Container erwartet: ${this.uniqueItemIds.join(', ')}`,
+                    `Hochgeladene IDs: ${uploadedIds.join(', ')}\n` +
+                    `Im Container erwartet: ${this.uniqueItemIds.join(', ')}`
                   );
                 }
-                event.target.value = '';
+                event.target.value = ''; // Input zurücksetzen
               }
             };
 
             Array.from(files).forEach((file) => {
               const reader = new FileReader();
-
+              
               reader.onload = (e) => {
                 try {
                   const itemData = JSON.parse(e.target.result);
                   if (itemData.Id && itemData.Size) {
                     uploadedIds.push(itemData.Id);
-
+                    
                     this.itemSizes = {
                       ...this.itemSizes,
                       [itemData.Id]: {
@@ -1334,6 +1330,7 @@
                       },
                     };
 
+                    // Prüfen, ob die ID zum Container passt
                     if (this.uniqueItemIds.includes(itemData.Id)) {
                       matchedAtLeastOne = true;
                     }
@@ -1341,13 +1338,14 @@
                 } catch (error) {
                   console.error('Fehler beim Lesen der Item-Datei:', file.name);
                 } finally {
-                  checkCompletion(); 
+                  checkCompletion(); // Datei erfolgreich (oder fehlerhaft) geparst
                 }
               };
 
               reader.onerror = () => {
                 console.error('Fehler beim Laden der Datei:', file.name);
-                checkCompletion();
+                checkCompletion(); // Auch bei einem Lade-Fehler hochzählen, damit wir nicht hängen bleiben
+              };
 
               reader.readAsText(file);
             });
