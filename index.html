@@ -747,7 +747,7 @@
         return {
           jsonData: null,
           items: [],
-          itemSizes: null,
+          itemSizes: [],
           selectedItem: null,
           selectedItems: [],
           width: 1000,
@@ -1293,12 +1293,39 @@
             const files = event.target.files;
             if (!files.length) return;
 
+            let matchedAtLeastOne = false;
+            const uploadedIds = [];
+            let filesProcessed = 0; // Zähler für die fertigen Dateien
+
+            // Hilfsfunktion, die nach jeder Datei aufgerufen wird
+            const checkCompletion = () => {
+              filesProcessed++;
+              // Wenn alle Dateien durchgelaufen sind, machen wir den Check
+              if (filesProcessed === files.length) {
+                if (
+                  uploadedIds.length > 0 &&
+                  !matchedAtLeastOne &&
+                  this.uniqueItemIds.length > 0
+                ) {
+                  alert(
+                    `Achtung: Keine der hochgeladenen Item-IDs passt zu diesem Container!\n\n` +
+                      `Hochgeladene IDs: ${uploadedIds.join(', ')}\n` +
+                      `Im Container erwartet: ${this.uniqueItemIds.join(', ')}`,
+                  );
+                }
+                event.target.value = '';
+              }
+            };
+
             Array.from(files).forEach((file) => {
               const reader = new FileReader();
+
               reader.onload = (e) => {
                 try {
                   const itemData = JSON.parse(e.target.result);
                   if (itemData.Id && itemData.Size) {
+                    uploadedIds.push(itemData.Id);
+
                     this.itemSizes = {
                       ...this.itemSizes,
                       [itemData.Id]: {
@@ -1306,14 +1333,24 @@
                         y: itemData.Size.y,
                       },
                     };
+
+                    if (this.uniqueItemIds.includes(itemData.Id)) {
+                      matchedAtLeastOne = true;
+                    }
                   }
                 } catch (error) {
                   console.error('Fehler beim Lesen der Item-Datei:', file.name);
+                } finally {
+                  checkCompletion(); 
                 }
               };
+
+              reader.onerror = () => {
+                console.error('Fehler beim Laden der Datei:', file.name);
+                checkCompletion();
+
               reader.readAsText(file);
             });
-            event.target.value = '';
           },
 
           getItemDimensions(itemId) {
@@ -1360,9 +1397,7 @@
           },
 
           handleItemClick(e, item) {
-            // Wenn Shift gedrückt ist -> Multi-Select Modus
             if (e.shiftKey) {
-              // Falls aktuell nur ein einzelnes Element markiert war, schiebe es ins Array
               if (this.selectedItem) {
                 this.selectedItems = [this.selectedItem];
                 this.selectedItem = null;
