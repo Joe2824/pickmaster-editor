@@ -204,9 +204,8 @@
             <template x-for="item in items" :key="item.Id">
               <div
                 class="absolute transition-transform transform -translate-x-1/2 -translate-y-1/2 no-select opacity-85"
-                :style="`left: ${(item.X / width) * 100}%; top: ${(item.Y / height) * 100}%; width: ${(getItemDimensions(item.ItemId).x / width) * 100}%; height: ${(getItemDimensions(item.ItemId).y / height) * 100}%;`"
-                :class="(isSelected(item) ? 'z-20 scale-110 ' : 'z-10 hover:scale-105 ') + (dragMode ? 'cursor-move ' : 'cursor-pointer ') + (isDragging && isSelected(item) ? 'opacity-75 ' : 'duration-200')"
-                @mousedown.stop="startDrag($event, item)"
+                :style="`left: ${(item.X / width) * 100}%; top: ${(item.Y / height) * 100}%; width: ${(getItemDimensions(item.ItemId).x / width) * 100}%; height: ${(getItemDimensions(item.ItemId).y / height) * 100}%; z-index: ${getDynamicZIndex(item)};`"
+                :class="(isSelected(item) ? 'scale-110 ' : 'hover:scale-105 ') + (dragMode ? 'cursor-move ' : 'cursor-pointer ') + (isDragging && isSelected(item) ? 'opacity-75 ' : 'duration-200')"                @mousedown.stop="startDrag($event, item)"
                 @click.stop="handleItemClick($event, item)"
                 :title="`Order: ${item.Order} | X: ${item.X}, Y: ${item.Y} | RZ: ${item.RZ}°${hasDuplicateOrder(item.Order) ? '\nACHTUNG: Diese Order-Nummer existiert mehrfach!' : ''}`"
               >
@@ -1580,6 +1579,17 @@
 
             document.body.removeChild(link);
             URL.revokeObjectURL(url);
+          },
+
+          getDynamicZIndex(item) {
+            const maxOrder = this.items.length > 0 ? Math.max(...this.items.map((i) => i.Order)) : 0;
+            if (this.isSelected(item)) return maxOrder+1;
+            const numericId = parseInt(item.Order, 10);            
+            if (!isNaN(numericId)) {
+               return numericId;
+            } else {
+               return this.uniqueItemIds.indexOf(item.Order) + 10;
+            }
           },
         };
       }
