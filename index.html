@@ -18,34 +18,99 @@
       }
     </style>
   </head>
-  <body class="bg-gray-50 h-screen flex flex-col font-sans" x-data="pickmasterApp()" @keydown.window="handleKeyDown($event)" @mousemove.window="onDrag($event)" @mouseup.window="stopDrag()">
+  <body
+    class="bg-gray-50 h-screen flex flex-col font-sans"
+    x-data="pickmasterApp()"
+    @keydown.window="handleKeyDown($event)"
+    @mousemove.window="onDrag($event)"
+    @mouseup.window="stopDrag()"
+  >
     <!-- Header -->
-    <header class="bg-blue-600 text-white p-4 shadow-md flex justify-between items-center z-10">
+    <header
+      class="bg-blue-600 text-white p-4 shadow-md flex justify-between items-center z-10"
+    >
       <h1 class="text-xl font-bold">PickMaster Twin - Fast Pattern Editor</h1>
 
       <div class="flex items-center space-x-4">
         <!-- Autosave Indikator -->
-        <div x-show="lastSaved" x-transition class="text-blue-200 text-xs flex items-center gap-1.5 bg-blue-700 px-2 py-1 rounded">
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-          <span>Lokal gespeichert: <span x-text="lastSaved"></span></span>
+        <div
+          x-show="lastSaved"
+          x-transition
+          class="text-blue-200 text-xs flex items-center gap-1.5 bg-blue-700 px-2 py-1 rounded"
+        >
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M5 13l4 4L19 7"
+            ></path>
+          </svg>
+          <span>
+            Lokal gespeichert:
+            <span x-text="lastSaved"></span>
+          </span>
         </div>
 
         <div class="flex space-x-2">
-          <input type="file" id="fileInput" accept=".json" @change="loadFile" class="hidden" />
+          <input
+            type="file"
+            id="fileInput"
+            accept=".json"
+            @change="loadFile"
+            class="hidden"
+          />
+          <input
+            type="file"
+            id="itemFileInput"
+            accept=".json"
+            multiple
+            @change="loadItemFiles"
+            class="hidden"
+          />
 
-          <button x-show="jsonData" @click="document.getElementById('fileInput').click()" class="cursor-pointer bg-blue-500 hover:bg-blue-400 px-4 py-2 rounded shadow transition text-sm">JSON Laden</button>
+          <button
+            x-show="jsonData"
+            @click="document.getElementById('itemFileInput').click()"
+            class="cursor-pointer bg-purple-500 hover:bg-purple-400 px-4 py-2 rounded shadow transition text-sm"
+          >
+            Item laden
+          </button>
+          <button
+            x-show="jsonData"
+            @click="document.getElementById('fileInput').click()"
+            class="cursor-pointer bg-blue-500 hover:bg-blue-400 px-4 py-2 rounded shadow transition text-sm"
+          >
+            Container Laden
+          </button>
 
-          <button x-show="jsonData" @click="saveFile" class="cursor-pointer bg-green-500 hover:bg-green-400 px-4 py-2 rounded shadow transition text-sm flex items-center gap-3">
+          <button
+            x-show="jsonData"
+            @click="saveFile"
+            class="cursor-pointer bg-green-500 hover:bg-green-400 px-4 py-2 rounded shadow transition text-sm flex items-center gap-3"
+          >
             <span class="font-semibold">Exportieren</span>
             <div class="hidden sm:flex items-center gap-0.5 text-[10px] text-green-900">
-              <kbd class="bg-white/30 border border-green-600/50 rounded px-1 py-0.5 shadow-sm font-sans font-semibold">Strg</kbd>
+              <kbd
+                class="bg-white/80 border border-green-600/50 rounded px-1 py-0.5 shadow-sm font-sans font-semibold"
+                >Strg</kbd
+              >
               <span class="opacity-75">+</span>
-              <kbd class="bg-white/30 border border-green-600/50 rounded px-1 py-0.5 shadow-sm font-sans font-semibold">E</kbd>
+              <kbd
+                class="bg-white/80 border border-green-600/50 rounded px-1 py-0.5 shadow-sm font-sans font-semibold"
+                >E</kbd
+              >
             </div>
           </button>
         </div>
 
-        <a href="https://github.com/Joe2824/pickmaster-editor" target="_blank" rel="noopener noreferrer" class="text-blue-200 hover:text-white transition-colors duration-200 ml-2" title="Zum GitHub Repository">
+        <a
+          href="https://github.com/Joe2824/pickmaster-editor"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="text-blue-200 hover:text-white transition-colors duration-200 ml-2"
+          title="Zum GitHub Repository"
+        >
           <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path
               fill-rule="evenodd"
@@ -62,27 +127,57 @@
       <div class="w-2/3 p-4 flex flex-col h-full border-r border-gray-200 bg-gray-100">
         <div class="flex justify-between items-center mb-2">
           <h2 class="text-lg font-semibold flex items-center gap-4">
-            <span>Visualisierung (<span x-text="width"></span> x <span x-text="height"></span>)</span>
+            <span>
+              Visualisierung (
+              <span x-text="width"></span>
+              x
+              <span x-text="height"></span>
+              )
+            </span>
 
             <!-- Legende -->
             <div class="flex gap-2 text-xs font-normal border-l pl-4 border-gray-300">
               <template x-for="(color, id) in itemColors" :key="id">
-                <div class="flex items-center gap-1 bg-white px-2 py-1 rounded shadow-sm border border-gray-200">
+                <div
+                  class="flex items-center gap-1 bg-white px-2 py-1 rounded shadow-sm border border-gray-200"
+                >
                   <div class="w-3 h-3 rounded-sm" :class="color.bg"></div>
-                  <span class="text-gray-600 truncate w-16" :title="id" x-text="id"></span>
+                  <span
+                    class="text-gray-600 truncate w-16"
+                    :title="id"
+                    x-text="id"
+                  ></span>
                 </div>
               </template>
             </div>
           </h2>
           <div class="flex items-center space-x-2">
-            <span x-show="showMouseCoords && !selectedItem && selectedItems.length === 0" x-transition class="text-blue-700 bg-blue-100 px-2 py-0.5 rounded text-sm font-mono border border-blue-200"> X <span x-text="mouseX"></span> | Y <span x-text="mouseY"></span> </span>
-            <button @click="toggleDragMode" :class="dragMode ? 'bg-orange-500 hover:bg-orange-600' : 'bg-gray-400 hover:bg-gray-500'" class="cursor-pointer text-white px-3 py-1 rounded shadow transition text-xs font-medium flex items-center gap-2">
-              <span>Drag & Drop: <span x-text="dragMode ? 'AN' : 'AUS'"></span></span>
+            <span
+              x-show="showMouseCoords && !selectedItem && selectedItems.length === 0"
+              x-transition
+              class="text-blue-700 bg-blue-100 px-2 py-0.5 rounded text-sm font-mono border border-blue-200"
+            >
+              X
+              <span x-text="mouseX"></span>
+              | Y
+              <span x-text="mouseY"></span>
+            </span>
+            <button
+              @click="toggleDragMode"
+              :class="dragMode ? 'bg-orange-500 hover:bg-orange-600' : 'bg-gray-400 hover:bg-gray-500'"
+              class="cursor-pointer text-white px-3 py-1 rounded shadow transition text-xs font-medium flex items-center gap-2"
+            >
+              <span>
+                Drag & Drop:
+                <span x-text="dragMode ? 'AN' : 'AUS'"></span>
+              </span>
             </button>
           </div>
         </div>
 
-        <div class="flex-1 overflow-auto relative rounded flex items-center justify-center bg-gray-200 border shadow-inner p-4">
+        <div
+          class="flex-1 overflow-auto relative rounded flex items-center justify-center bg-gray-200 border shadow-inner p-4"
+        >
           <div
             x-ref="drawingArea"
             class="relative bg-white shadow-sm cursor-crosshair border border-gray-400 overflow-hidden"
@@ -102,20 +197,27 @@
 
             <template x-for="item in items" :key="item.Id">
               <div
-                class="absolute transition-transform transform -translate-x-1/2 -translate-y-1/2 no-select"
-                :style="`left: ${(item.X / width) * 100}%; top: ${(item.Y / height) * 100}%;`"
-                :class="(isSelected(item) ? 'z-20 scale-125 ' : 'z-10 hover:scale-110 ') + (dragMode ? 'cursor-move ' : 'cursor-pointer ') + (isDragging && isSelected(item) ? 'opacity-75 ' : 'duration-200')"
+                class="absolute transition-transform transform -translate-x-1/2 -translate-y-1/2 no-select opacity-85"
+                :style="`left: ${(item.X / width) * 100}%; top: ${(item.Y / height) * 100}%; width: ${(getItemDimensions(item.ItemId).x / width) * 100}%; height: ${(getItemDimensions(item.ItemId).y / height) * 100}%;`"
+                :class="(isSelected(item) ? 'z-20 scale-110 ' : 'z-10 hover:scale-105 ') + (dragMode ? 'cursor-move ' : 'cursor-pointer ') + (isDragging && isSelected(item) ? 'opacity-75 ' : 'duration-200')"
                 @mousedown.stop="startDrag($event, item)"
-                @click.stop="selectItem(item)"
+                @click.stop="handleItemClick($event, item)"
                 :title="`Order: ${item.Order} | X: ${item.X}, Y: ${item.Y} | RZ: ${item.RZ}°${hasDuplicateOrder(item.Order) ? '\nACHTUNG: Diese Order-Nummer existiert mehrfach!' : ''}`"
               >
                 <div
                   class="flex items-center justify-center shadow-md relative overflow-hidden transition-all duration-200 rounded-sm border"
-                  :style="`width: 44px; height: 26px; transform: rotate(${item.RZ || 0}deg);`"
+                  :style="`width: 100%; height: 100%; transform: rotate(${item.RZ || 0}deg);`"
                   :class="isSelected(item) ? 'bg-red-500 text-white border-red-700 border-2' : `${getItemColorClass(item.ItemId).bg} ${getItemColorClass(item.ItemId).text} ${getItemColorClass(item.ItemId).border}`"
                 >
-                  <div class="absolute right-0 top-0 bottom-0 w-1.5" :class="isSelected(item) ? 'bg-red-800' : getItemColorClass(item.ItemId).indicator"></div>
-                  <span class="text-xs font-bold pointer-events-none px-1 rounded-sm" :class="hasDuplicateOrder(item.Order) && !isSelected(item) ? 'bg-yellow-400 text-red-700 border border-red-500 animate-pulse' : ''" x-text="item.Order"></span>
+                  <div
+                    class="absolute top-0 left-0 right-0 h-1.5"
+                    :class="isSelected(item) ? 'bg-red-800' : getItemColorClass(item.ItemId).indicator"
+                  ></div>
+                  <span
+                    class="text-xs font-bold pointer-events-none px-1 rounded-sm"
+                    :class="hasDuplicateOrder(item.Order) && !isSelected(item) ? 'bg-yellow-400 text-red-700 border border-red-500 animate-pulse' : ''"
+                    x-text="item.Order"
+                  ></span>
                 </div>
               </div>
             </template>
@@ -125,21 +227,38 @@
 
       <!-- Rechte Seite: Eigenschaften & Listen-Ansicht -->
       <div class="w-1/3 flex flex-col h-full bg-white">
-        <div class="p-4 border-b border-gray-200 bg-gray-50 flex-none" style="height: 55%">
+        <div
+          class="p-4 border-b border-gray-200 bg-gray-50 flex-none"
+          style="height: 55%"
+        >
           <!-- SINGLE EDIT -->
           <template x-if="selectedItem">
             <div class="space-y-3 h-full overflow-y-auto pb-4">
-              <h2 class="text-lg font-semibold mb-2 text-gray-800">Eigenschaften bearbeiten</h2>
+              <h2 class="text-lg font-semibold mb-2 text-gray-800">
+                Eigenschaften bearbeiten
+              </h2>
               <div class="flex flex-col">
                 <label class="text-sm font-medium text-gray-600">Slot-ID</label>
-                <input type="text" readonly x-model="selectedItem.Id" class="border p-1.5 bg-gray-100 rounded text-xs text-gray-500 focus:outline-none" />
+                <input
+                  type="text"
+                  readonly
+                  x-model="selectedItem.Id"
+                  class="border p-1.5 bg-gray-100 rounded text-xs text-gray-500 focus:outline-none"
+                />
               </div>
 
               <div class="flex flex-col">
                 <label class="text-sm font-medium text-gray-700">ItemId</label>
-                <select @change="selectedItem.ItemId = $event.target.value" class="border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none flex-1 text-sm bg-white">
+                <select
+                  @change="selectedItem.ItemId = $event.target.value"
+                  class="border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none flex-1 text-sm bg-white"
+                >
                   <template x-for="id in uniqueItemIds" :key="id">
-                    <option :value="id" x-text="id" :selected="selectedItem && selectedItem.ItemId === id"></option>
+                    <option
+                      :value="id"
+                      x-text="id"
+                      :selected="selectedItem && selectedItem.ItemId === id"
+                    ></option>
                   </template>
                 </select>
               </div>
@@ -147,45 +266,103 @@
               <div class="grid grid-cols-2 gap-4">
                 <div class="flex flex-col">
                   <label class="text-sm font-medium text-gray-700">X Position</label>
-                  <input type="number" step="0.1" x-model.number="selectedItem.X" class="border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none transition" />
+                  <input
+                    type="number"
+                    step="0.1"
+                    x-model.number="selectedItem.X"
+                    class="border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none transition"
+                  />
                 </div>
                 <div class="flex flex-col">
                   <label class="text-sm font-medium text-gray-700">Y Position</label>
-                  <input type="number" step="0.1" x-model.number="selectedItem.Y" class="border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none transition" />
+                  <input
+                    type="number"
+                    step="0.1"
+                    x-model.number="selectedItem.Y"
+                    class="border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none transition"
+                  />
                 </div>
                 <div class="flex flex-col">
-                  <label class="text-sm font-medium text-gray-700">Z Rotation (RZ°)</label>
-                  <input type="number" step="0.1" x-model.number="selectedItem.RZ" class="border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none transition" />
+                  <label class="text-sm font-medium text-gray-700"
+                    >Z Rotation (RZ°)</label
+                  >
+                  <input
+                    type="number"
+                    step="0.1"
+                    x-model.number="selectedItem.RZ"
+                    class="border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none transition"
+                  />
                 </div>
                 <div class="flex flex-col">
-                  <label class="text-sm font-medium text-gray-700 flex items-center justify-between">
+                  <label
+                    class="text-sm font-medium text-gray-700 flex items-center justify-between"
+                  >
                     <span>Order (Nummer)</span>
-                    <span x-show="hasDuplicateOrder(selectedItem?.Order)" class="text-red-500 text-xs font-bold animate-pulse" title="Diese Nummer ist doppelt vergeben!">⚠️ DUPLIKAT</span>
+                    <span
+                      x-show="hasDuplicateOrder(selectedItem?.Order)"
+                      class="text-red-500 text-xs font-bold animate-pulse"
+                      title="Diese Nummer ist doppelt vergeben!"
+                    >
+                      ⚠️ DUPLIKAT
+                    </span>
                   </label>
-                  <input type="number" x-model.number="selectedItem.Order" class="border p-2 rounded outline-none transition" :class="hasDuplicateOrder(selectedItem.Order) ? 'border-red-500 focus:ring-2 focus:ring-red-500 bg-red-50' : 'focus:ring-2 focus:ring-blue-500'" />
+                  <input
+                    type="number"
+                    x-model.number="selectedItem.Order"
+                    class="border p-2 rounded outline-none transition"
+                    :class="hasDuplicateOrder(selectedItem.Order) ? 'border-red-500 focus:ring-2 focus:ring-red-500 bg-red-50' : 'focus:ring-2 focus:ring-blue-500'"
+                  />
                 </div>
               </div>
 
               <!-- Aktions-Buttons -->
               <div class="pt-2 flex gap-2">
-                <button @click="duplicateSelectedItem" class="cursor-pointer w-1/2 bg-blue-50 hover:bg-blue-500 text-blue-600 hover:text-white font-semibold py-2 rounded border border-blue-200 transition">Duplizieren</button>
-                <button @click="deleteSelectedItem" class="cursor-pointer w-1/2 bg-red-50 hover:bg-red-500 text-red-600 hover:text-white font-semibold py-2 rounded border border-red-200 transition">Löschen</button>
+                <button
+                  @click="duplicateSelectedItem"
+                  class="cursor-pointer w-1/2 bg-blue-50 hover:bg-blue-500 text-blue-600 hover:text-white font-semibold py-2 rounded border border-blue-200 transition"
+                >
+                  Duplizieren
+                </button>
+                <button
+                  @click="deleteSelectedItem"
+                  class="cursor-pointer w-1/2 bg-red-50 hover:bg-red-500 text-red-600 hover:text-white font-semibold py-2 rounded border border-red-200 transition"
+                >
+                  Löschen
+                </button>
               </div>
             </div>
           </template>
 
           <!-- MULTI EDIT -->
           <template x-if="selectedItems.length > 1 && !selectedItem">
-            <div class="space-y-4 h-full overflow-y-auto pb-4">
-              <h2 class="text-lg font-semibold mb-2 text-gray-800">Gruppen-Bearbeitung</h2>
-              <div class="bg-blue-100 border border-blue-200 text-blue-800 px-3 py-2 rounded text-sm font-semibold flex items-center justify-between shadow-sm">
-                <span><span x-text="selectedItems.length"></span> Elemente ausgewählt</span>
-                <button @click="selectedItems = []" class="cursor-pointer text-blue-500 hover:text-blue-700 font-bold px-1" title="Auswahl aufheben">✕</button>
+            <div class="space-y-4 h-full overflow-y-auto pb-4 no-select">
+              <h2 class="text-lg font-semibold mb-2 text-gray-800">
+                Gruppen-Bearbeitung
+              </h2>
+              <div
+                class="bg-blue-100 border border-blue-200 text-blue-800 px-3 py-2 rounded text-sm font-semibold flex items-center justify-between shadow-sm"
+              >
+                <span>
+                  <span x-text="selectedItems.length"></span>
+                  Elemente ausgewählt
+                </span>
+                <button
+                  @click="selectedItems = []"
+                  class="cursor-pointer text-blue-500 hover:text-blue-700 font-bold px-1"
+                  title="Auswahl aufheben"
+                >
+                  ✕
+                </button>
               </div>
 
               <div class="flex flex-col">
-                <label class="text-sm font-medium text-gray-700">ItemId für alle setzen</label>
-                <select @change="applyMulti('ItemId', $event.target.value)" class="border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none flex-1 text-sm bg-white cursor-pointer">
+                <label class="text-sm font-medium text-gray-700"
+                  >ItemId für alle setzen</label
+                >
+                <select
+                  @change="applyMulti('ItemId', $event.target.value)"
+                  class="no-select border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none flex-1 text-sm bg-white cursor-pointer"
+                >
                   <option value="" disabled selected>-- ItemId wählen --</option>
                   <template x-for="id in uniqueItemIds" :key="id">
                     <option :value="id" x-text="id"></option>
@@ -194,52 +371,264 @@
               </div>
 
               <div class="flex flex-col">
-                <label class="text-sm font-medium text-gray-700">Z Rotation (RZ°) für alle setzen</label>
-                <input type="number" step="0.1" @change="applyMulti('RZ', parseFloat($event.target.value))" placeholder="Neuer Winkel..." class="border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none transition" />
+                <label class="text-sm font-medium text-gray-700"
+                  >Z Rotation (RZ°) für alle setzen</label
+                >
+                <input
+                  type="number"
+                  step="0.1"
+                  @change="applyMulti('RZ', parseFloat($event.target.value))"
+                  placeholder="Neuer Winkel..."
+                  class="border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none transition"
+                />
+              </div>
+
+              <!-- Ausrichten & Verteilen Toolbar -->
+              <div class="pt-3 mt-2 border-t border-gray-200">
+                <label
+                  class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block"
+                >
+                  Layout & Position</label
+                >
+
+                <div class="flex flex-col gap-2">
+                  <div class="flex bg-gray-100 p-1 rounded-md border border-gray-200">
+                    <button
+                      @click="alignSelected('left')"
+                      class="cursor-pointer flex-1 flex justify-center p-1.5 rounded hover:bg-white hover:shadow-sm text-gray-500 hover:text-blue-600 transition-all"
+                      title="Linksbündig ausrichten"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <line x1="4" x2="4" y1="2" y2="22" />
+                        <rect width="10" height="6" x="8" y="4" rx="1" />
+                        <rect width="14" height="6" x="8" y="14" rx="1" />
+                      </svg>
+                    </button>
+                    <button
+                      @click="alignSelected('right')"
+                      class="cursor-pointer flex-1 flex justify-center p-1.5 rounded hover:bg-white hover:shadow-sm text-gray-500 hover:text-blue-600 transition-all"
+                      title="Rechtsbündig ausrichten"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <line x1="20" x2="20" y1="2" y2="22" />
+                        <rect width="10" height="6" x="6" y="4" rx="1" />
+                        <rect width="14" height="6" x="2" y="14" rx="1" />
+                      </svg>
+                    </button>
+
+                    <!-- Trennlinie -->
+                    <div class="w-px bg-gray-500 mx-1 my-1"></div>
+
+                    <button
+                      @click="alignSelected('top')"
+                      class="cursor-pointer flex-1 flex justify-center p-1.5 rounded hover:bg-white hover:shadow-sm text-gray-500 hover:text-blue-600 transition-all"
+                      title="Obenbündig ausrichten"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <line x1="2" x2="22" y1="4" y2="4" />
+                        <rect width="6" height="10" x="4" y="8" rx="1" />
+                        <rect width="6" height="14" x="14" y="8" rx="1" />
+                      </svg>
+                    </button>
+                    <button
+                      @click="alignSelected('bottom')"
+                      class="cursor-pointer flex-1 flex justify-center p-1.5 rounded hover:bg-white hover:shadow-sm text-gray-500 hover:text-blue-600 transition-all"
+                      title="Untenbündig ausrichten"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <line x1="2" x2="22" y1="20" y2="20" />
+                        <rect width="6" height="10" x="4" y="6" rx="1" />
+                        <rect width="6" height="14" x="14" y="2" rx="1" />
+                      </svg>
+                    </button>
+
+                    <div class="w-px bg-gray-500 mx-1 my-1"></div>
+
+                    <button
+                      @click="distributeSelected('horizontal')"
+                      class="cursor-pointer flex-1 flex items-center justify-center gap-2 p-1.5 rounded hover:bg-white hover:shadow-sm text-gray-600 hover:text-blue-600 transition-all text-xs font-medium"
+                      title="Horizontal gleichmäßig verteilen (min. 3)"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <rect width="4" height="14" x="10" y="5" rx="1" />
+                        <line x1="4" x2="4" y1="2" y2="22" />
+                        <line x1="20" x2="20" y1="2" y2="22" />
+                      </svg>
+                    </button>
+
+                    <button
+                      @click="distributeSelected('vertical')"
+                      class="cursor-pointer flex-1 flex items-center justify-center gap-2 p-1.5 rounded hover:bg-white hover:shadow-sm text-gray-600 hover:text-blue-600 transition-all text-xs font-medium"
+                      title="Vertikal gleichmäßig verteilen (min. 3)"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <rect width="14" height="4" x="5" y="10" rx="1" />
+                        <line x1="2" x2="22" y1="4" y2="4" />
+                        <line x1="2" x2="22" y1="20" y2="20" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
               </div>
 
               <div class="pt-2">
-                <button @click="deleteSelectedItems" class="cursor-pointer w-full bg-red-50 hover:bg-red-500 text-red-600 hover:text-white font-semibold py-2 rounded border border-red-200 transition shadow-sm">Alle <span x-text="selectedItems.length"></span> markierten löschen</button>
+                <button
+                  @click="deleteSelectedItems"
+                  class="cursor-pointer w-full bg-red-50 hover:bg-red-500 text-red-600 hover:text-white font-semibold py-2 rounded border border-red-200 transition shadow-sm"
+                >
+                  Alle
+                  <span x-text="selectedItems.length"></span>
+                  markierten löschen
+                </button>
               </div>
             </div>
           </template>
 
           <!-- EMPTY STATE -->
           <template x-if="!selectedItem && selectedItems.length === 0">
-            <div class="h-full flex flex-col items-center justify-center text-center px-4 space-y-2">
-              <svg class="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"></path>
+            <div
+              class="h-full flex flex-col items-center justify-center text-center px-4 space-y-2"
+            >
+              <svg
+                class="w-12 h-12 text-gray-300"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.5"
+                  d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"
+                ></path>
               </svg>
-              <p class="text-gray-400 text-sm">Wähle ein Element in der Visualisierung aus oder markiere mehrere mit einem Rahmen, um deren Werte anzupassen.</p>
+              <p class="text-gray-400 text-sm">
+                Wähle ein Element in der Visualisierung aus oder markiere mehrere mit
+                einem Rahmen, um deren Werte anzupassen.
+              </p>
             </div>
           </template>
         </div>
 
         <div class="p-4 flex flex-col flex-1 overflow-hidden">
           <div class="flex justify-between items-center mb-3">
-            <h2 class="text-lg font-semibold text-gray-800">Element-Liste (<span x-text="items.length"></span>)</h2>
-            <button @click="addNewItem" class="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded shadow text-sm transition font-medium">+ Neues Item</button>
+            <h2 class="text-lg font-semibold text-gray-800">
+              Element-Liste (
+              <span x-text="items.length"></span>
+              )
+            </h2>
+            <button
+              @click="addNewItem"
+              class="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded shadow text-sm transition font-medium"
+            >
+              + Neues Item
+            </button>
           </div>
 
-          <div class="flex-1 overflow-y-auto border border-gray-200 rounded shadow-inner bg-white">
+          <div
+            class="flex-1 overflow-y-auto border border-gray-200 rounded shadow-inner bg-white"
+          >
             <ul class="divide-y divide-gray-100">
               <template x-for="item in items" :key="item.Id">
                 <li
                   :id="'list-item-' + item.Id"
-                  @click="selectItem(item)"
+                  @click="handleItemClick($event, item)"
                   class="p-2 cursor-pointer transition-colors flex justify-between items-center hover:bg-blue-50"
                   :class="isSelected(item) ? 'bg-blue-50 border-l-4 border-blue-500' : (hasDuplicateOrder(item.Order) ? 'bg-red-50 border-l-4 border-red-500' : 'border-l-4 border-transparent')"
                 >
                   <div class="flex items-center gap-3 w-full">
-                    <div class="w-2 h-2 rounded-full flex-none" :class="getItemColorClass(item.ItemId).indicator"></div>
+                    <div
+                      class="w-2 h-2 rounded-full flex-none"
+                      :class="getItemColorClass(item.ItemId).indicator"
+                    ></div>
+                    /80
                     <div class="flex-1 flex items-center gap-2">
-                      <div class="font-bold text-sm" :class="hasDuplicateOrder(item.Order) ? 'text-red-600' : 'text-gray-700'">
-                        #<span x-text="item.Order"></span>
-                        <span x-show="hasDuplicateOrder(item.Order)" title="Nummer doppelt vergeben!">⚠️</span>
+                      <div
+                        class="font-bold text-sm"
+                        :class="hasDuplicateOrder(item.Order) ? 'text-red-600' : 'text-gray-700'"
+                      >
+                        #
+                        <span x-text="item.Order"></span>
+                        <span
+                          x-show="hasDuplicateOrder(item.Order)"
+                          title="Nummer doppelt vergeben!"
+                          >⚠️</span
+                        >
                       </div>
-                      <div class="text-xs text-gray-400 truncate w-24" :title="item.ItemId" x-text="item.ItemId"></div>
+                      <div
+                        class="text-xs text-gray-400 truncate w-24"
+                        :title="item.ItemId"
+                        x-text="item.ItemId"
+                      ></div>
                     </div>
-                    <div class="text-xs text-gray-500 border bg-white px-1.5 py-0.5 rounded flex-none shadow-sm">X: <span x-text="item.X"></span> | Y: <span x-text="item.Y"></span></div>
+                    <div
+                      class="text-xs text-gray-500 border bg-white px-1.5 py-0.5 rounded flex-none shadow-sm"
+                    >
+                      X:
+                      <span x-text="item.X"></span>
+                      | Y:
+                      <span x-text="item.Y"></span>
+                    </div>
                   </div>
                 </li>
               </template>
@@ -250,24 +639,63 @@
     </main>
 
     <!-- Start-Bildschirm -->
-    <div x-show="!jsonData" class="flex-1 flex flex-col items-center justify-center bg-gray-100 p-4">
-      <div class="text-center p-8 bg-white shadow-lg rounded-xl border border-gray-200 max-w-lg w-full">
-        <svg class="mx-auto h-12 w-12 text-blue-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+    <div
+      x-show="!jsonData"
+      class="flex-1 flex flex-col items-center justify-center bg-gray-100 p-4"
+    >
+      <div
+        class="text-center p-8 bg-white shadow-lg rounded-xl border border-gray-200 max-w-lg w-full"
+      >
+        <svg
+          class="mx-auto h-12 w-12 text-blue-500 mb-4"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+          />
         </svg>
         <h3 class="text-2xl font-bold text-gray-900 mb-2">PickMaster Konfigurator</h3>
-        <p class="text-gray-500 mb-6">Lade deine PickMaster .json Datei, um den Editor zu starten.</p>
+        <p class="text-gray-500 mb-6">
+          Lade deine PickMaster .json Datei, um den Editor zu starten.
+        </p>
 
-        <button @click="document.getElementById('fileInput').click()" class="cursor-pointer w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg shadow transition mb-4">JSON Datei auswählen</button>
+        <button
+          @click="document.getElementById('fileInput').click()"
+          class="cursor-pointer w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg shadow transition mb-4"
+        >
+          JSON Datei auswählen
+        </button>
 
         <!-- Letzte Sitzung wiederherstellen -->
         <div x-show="hasSavedSession" x-cloak class="mt-4 pt-4 border-t border-gray-100">
-          <p class="text-sm text-gray-600 mb-3">Es wurde ein ungespeicherter Entwurf gefunden.</p>
+          <p class="text-sm text-gray-600 mb-3">
+            Es wurde ein ungespeicherter Entwurf gefunden.
+          </p>
           <div class="flex gap-2">
-            <button type="button" @click="restoreSession()" class="cursor-pointer flex-1 bg-green-100 hover:bg-green-200 text-green-800 font-medium py-2 px-4 rounded transition border border-green-300">Wiederherstellen</button>
-            <button @click="clearSession()" class="cursor-pointer bg-gray-100 hover:bg-gray-200 text-gray-600 py-2 px-3 rounded transition border border-gray-300" title="Entwurf löschen">
+            <button
+              type="button"
+              @click="restoreSession()"
+              class="cursor-pointer flex-1 bg-green-100 hover:bg-green-200 text-green-800 font-medium py-2 px-4 rounded transition border border-green-300"
+            >
+              Wiederherstellen
+            </button>
+            <button
+              @click="clearSession()"
+              class="cursor-pointer bg-gray-100 hover:bg-gray-200 text-gray-600 py-2 px-3 rounded transition border border-gray-300"
+              title="Entwurf löschen"
+            >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                ></path>
               </svg>
             </button>
           </div>
@@ -278,18 +706,36 @@
       <div class="mt-12 max-w-lg w-full border-t border-gray-200 pt-6">
         <div class="flex flex-col gap-4 px-4">
           <!-- Datenschutz -->
-          <div class="flex items-start gap-3 text-left bg-blue-50/50 p-3 rounded-lg border border-blue-100/50">
-            <svg class="w-5 h-5 text-blue-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+          <div
+            class="flex items-start gap-3 text-left bg-blue-50/50 p-3 rounded-lg border border-blue-100/50"
+          >
+            <svg
+              class="w-5 h-5 text-blue-500 mt-0.5 shrink-0"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+              ></path>
             </svg>
-            <p class="text-xs text-gray-600 leading-relaxed">Alle Änderungen werden ausschließlich lokal in deinem Browser verarbeitet. Es findet kein Upload auf einen Server statt.</p>
+            <p class="text-xs text-gray-600 leading-relaxed">
+              Alle Änderungen werden ausschließlich lokal in deinem Browser verarbeitet.
+              Es findet kein Upload auf einen Server statt.
+            </p>
           </div>
 
           <!-- Disclaimer -->
           <div class="">
             <p class="text-[10px] text-gray-400 leading-tight italic">
-              <strong>Disclaimer:</strong><br />
-              Dieses Projekt ist ein unabhängiges Community-Tool und steht in keiner offiziellen Verbindung zur ABB-Gruppe. ABB™ und PickMaster™ sind eingetragene Marken der ABB Asea Brown Boveri Ltd.
+              <strong>Disclaimer:</strong>
+              <br />
+              Dieses Projekt ist ein unabhängiges Community-Tool und steht in keiner
+              offiziellen Verbindung zur ABB-Gruppe. ABB™ und PickMaster™ sind
+              eingetragene Marken der ABB Asea Brown Boveri Ltd.
             </p>
           </div>
         </div>
@@ -301,6 +747,7 @@
         return {
           jsonData: null,
           items: [],
+          itemSizes: null,
           selectedItem: null,
           selectedItems: [],
           width: 1000,
@@ -308,37 +755,187 @@
 
           uniqueItemIds: [],
           colorPalettes: [
-            { bg: "bg-blue-100", text: "text-blue-900", border: "border-blue-400", indicator: "bg-blue-600" },
-            { bg: "bg-green-100", text: "text-green-900", border: "border-green-400", indicator: "bg-green-600" },
-            { bg: "bg-yellow-100", text: "text-yellow-900", border: "border-yellow-400", indicator: "bg-yellow-600" },
-            { bg: "bg-purple-100", text: "text-purple-900", border: "border-purple-400", indicator: "bg-purple-600" },
-            { bg: "bg-pink-100", text: "text-pink-900", border: "border-pink-400", indicator: "bg-pink-600" },
-            { bg: "bg-orange-100", text: "text-orange-900", border: "border-orange-400", indicator: "bg-orange-600" },
-            { bg: "bg-teal-100", text: "text-teal-900", border: "border-teal-400", indicator: "bg-teal-600" },
-            { bg: "bg-indigo-100", text: "text-indigo-900", border: "border-indigo-400", indicator: "bg-indigo-600" },
-            { bg: "bg-red-100", text: "text-red-900", border: "border-red-400", indicator: "bg-red-600" },
-            { bg: "bg-cyan-100", text: "text-cyan-900", border: "border-cyan-400", indicator: "bg-cyan-600" },
-            { bg: "bg-rose-100", text: "text-rose-900", border: "border-rose-400", indicator: "bg-rose-600" },
-            { bg: "bg-fuchsia-100", text: "text-fuchsia-900", border: "border-fuchsia-400", indicator: "bg-fuchsia-600" },
-            { bg: "bg-violet-100", text: "text-violet-900", border: "border-violet-400", indicator: "bg-violet-600" },
-            { bg: "bg-sky-100", text: "text-sky-900", border: "border-sky-400", indicator: "bg-sky-600" },
-            { bg: "bg-emerald-100", text: "text-emerald-900", border: "border-emerald-400", indicator: "bg-emerald-600" },
-            { bg: "bg-lime-100", text: "text-lime-900", border: "border-lime-400", indicator: "bg-lime-600" },
-            { bg: "bg-amber-100", text: "text-amber-900", border: "border-amber-400", indicator: "bg-amber-600" },
+            {
+              bg: 'bg-blue-300',
+              text: 'text-blue-900',
+              border: 'border-blue-400',
+              indicator: 'bg-blue-600/80',
+            },
+            {
+              bg: 'bg-green-300',
+              text: 'text-green-900',
+              border: 'border-green-400',
+              indicator: 'bg-green-600/80',
+            },
+            {
+              bg: 'bg-yellow-300',
+              text: 'text-yellow-900',
+              border: 'border-yellow-400',
+              indicator: 'bg-yellow-600/80',
+            },
+            {
+              bg: 'bg-purple-300',
+              text: 'text-purple-900',
+              border: 'border-purple-400',
+              indicator: 'bg-purple-600/80',
+            },
+            {
+              bg: 'bg-pink-300',
+              text: 'text-pink-900',
+              border: 'border-pink-400',
+              indicator: 'bg-pink-600/80',
+            },
+            {
+              bg: 'bg-orange-300',
+              text: 'text-orange-900',
+              border: 'border-orange-400',
+              indicator: 'bg-orange-600/80',
+            },
+            {
+              bg: 'bg-teal-300',
+              text: 'text-teal-900',
+              border: 'border-teal-400',
+              indicator: 'bg-teal-600/80',
+            },
+            {
+              bg: 'bg-indigo-300',
+              text: 'text-indigo-900',
+              border: 'border-indigo-400',
+              indicator: 'bg-indigo-600/80',
+            },
+            {
+              bg: 'bg-red-300',
+              text: 'text-red-900',
+              border: 'border-red-400',
+              indicator: 'bg-red-600/80',
+            },
+            {
+              bg: 'bg-cyan-300',
+              text: 'text-cyan-900',
+              border: 'border-cyan-400',
+              indicator: 'bg-cyan-600/80',
+            },
+            {
+              bg: 'bg-rose-300',
+              text: 'text-rose-900',
+              border: 'border-rose-400',
+              indicator: 'bg-rose-600/80',
+            },
+            {
+              bg: 'bg-fuchsia-300',
+              text: 'text-fuchsia-900',
+              border: 'border-fuchsia-400',
+              indicator: 'bg-fuchsia-600/80',
+            },
+            {
+              bg: 'bg-violet-300',
+              text: 'text-violet-900',
+              border: 'border-violet-400',
+              indicator: 'bg-violet-600/80',
+            },
+            {
+              bg: 'bg-sky-300',
+              text: 'text-sky-900',
+              border: 'border-sky-400',
+              indicator: 'bg-sky-600/80',
+            },
+            {
+              bg: 'bg-emerald-300',
+              text: 'text-emerald-900',
+              border: 'border-emerald-400',
+              indicator: 'bg-emerald-600/80',
+            },
+            {
+              bg: 'bg-lime-300',
+              text: 'text-lime-900',
+              border: 'border-lime-400',
+              indicator: 'bg-lime-600/80',
+            },
+            {
+              bg: 'bg-amber-300',
+              text: 'text-amber-900',
+              border: 'border-amber-400',
+              indicator: 'bg-amber-600/80',
+            },
 
-            { bg: "bg-blue-200", text: "text-blue-900", border: "border-blue-500", indicator: "bg-blue-700" },
-            { bg: "bg-green-200", text: "text-green-900", border: "border-green-500", indicator: "bg-green-700" },
-            { bg: "bg-purple-200", text: "text-purple-900", border: "border-purple-500", indicator: "bg-purple-700" },
-            { bg: "bg-pink-200", text: "text-pink-900", border: "border-pink-500", indicator: "bg-pink-700" },
-            { bg: "bg-orange-200", text: "text-orange-900", border: "border-orange-500", indicator: "bg-orange-700" },
-            { bg: "bg-teal-200", text: "text-teal-900", border: "border-teal-500", indicator: "bg-teal-700" },
-            { bg: "bg-indigo-200", text: "text-indigo-900", border: "border-indigo-500", indicator: "bg-indigo-700" },
-            { bg: "bg-red-200", text: "text-red-900", border: "border-red-500", indicator: "bg-red-700" },
-            { bg: "bg-cyan-200", text: "text-cyan-900", border: "border-cyan-500", indicator: "bg-cyan-700" },
-            { bg: "bg-rose-200", text: "text-rose-900", border: "border-rose-500", indicator: "bg-rose-700" },
-            { bg: "bg-emerald-200", text: "text-emerald-900", border: "border-emerald-500", indicator: "bg-emerald-700" },
-            { bg: "bg-amber-200", text: "text-amber-900", border: "border-amber-500", indicator: "bg-amber-700" },
-            { bg: "bg-fuchsia-200", text: "text-fuchsia-900", border: "border-fuchsia-500", indicator: "bg-fuchsia-700" },
+            {
+              bg: 'bg-blue-100',
+              text: 'text-blue-900',
+              border: 'border-blue-500',
+              indicator: 'bg-blue-700/80',
+            },
+            {
+              bg: 'bg-green-100',
+              text: 'text-green-900',
+              border: 'border-green-500',
+              indicator: 'bg-green-700/80',
+            },
+            {
+              bg: 'bg-purple-100',
+              text: 'text-purple-900',
+              border: 'border-purple-500',
+              indicator: 'bg-purple-700/80',
+            },
+            {
+              bg: 'bg-pink-100',
+              text: 'text-pink-900',
+              border: 'border-pink-500',
+              indicator: 'bg-pink-700/80',
+            },
+            {
+              bg: 'bg-orange-100',
+              text: 'text-orange-900',
+              border: 'border-orange-500',
+              indicator: 'bg-orange-700/80',
+            },
+            {
+              bg: 'bg-teal-100',
+              text: 'text-teal-900',
+              border: 'border-teal-500',
+              indicator: 'bg-teal-700/80',
+            },
+            {
+              bg: 'bg-indigo-100',
+              text: 'text-indigo-900',
+              border: 'border-indigo-500',
+              indicator: 'bg-indigo-700/80',
+            },
+            {
+              bg: 'bg-red-100',
+              text: 'text-red-900',
+              border: 'border-red-500',
+              indicator: 'bg-red-700/80',
+            },
+            {
+              bg: 'bg-cyan-100',
+              text: 'text-cyan-900',
+              border: 'border-cyan-500',
+              indicator: 'bg-cyan-700/80',
+            },
+            {
+              bg: 'bg-rose-100',
+              text: 'text-rose-900',
+              border: 'border-rose-500',
+              indicator: 'bg-rose-700/80',
+            },
+            {
+              bg: 'bg-emerald-100',
+              text: 'text-emerald-900',
+              border: 'border-emerald-500',
+              indicator: 'bg-emerald-700/80',
+            },
+            {
+              bg: 'bg-amber-100',
+              text: 'text-amber-900',
+              border: 'border-amber-500',
+              indicator: 'bg-amber-700/80',
+            },
+            {
+              bg: 'bg-fuchsia-100',
+              text: 'text-fuchsia-900',
+              border: 'border-fuchsia-500',
+              indicator: 'bg-fuchsia-700/80',
+            },
           ],
           itemColors: {},
 
@@ -362,16 +959,17 @@
           showMouseCoords: false,
 
           hasSavedSession: false,
-          lastSaved: "",
+          lastSaved: '',
           autosaveTimeout: null,
 
           init() {
             try {
-              if (localStorage.getItem("pickmaster_autosave")) this.hasSavedSession = true;
+              if (localStorage.getItem('pickmaster_autosave'))
+                this.hasSavedSession = true;
             } catch (e) {}
 
             this.$watch(
-              "jsonData",
+              'jsonData',
               (value) => {
                 if (value) this.triggerAutosave();
               },
@@ -380,7 +978,8 @@
           },
 
           hasDuplicateOrder(orderNumber) {
-            if (orderNumber === undefined || orderNumber === null || orderNumber === "") return false;
+            if (orderNumber === undefined || orderNumber === null || orderNumber === '')
+              return false;
             let count = 0;
             for (let i = 0; i < this.items.length; i++) {
               if (this.items[i].Order === orderNumber) count++;
@@ -393,21 +992,41 @@
             clearTimeout(this.autosaveTimeout);
             this.autosaveTimeout = setTimeout(() => {
               try {
-                localStorage.setItem("pickmaster_autosave", JSON.stringify(this.jsonData));
-                this.lastSaved = new Date().toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+                localStorage.setItem(
+                  'pickmaster_autosave',
+                  JSON.stringify(this.jsonData),
+                );
+                localStorage.setItem(
+                  'pickmaster_item_sizes',
+                  JSON.stringify(this.itemSizes),
+                );
+                this.lastSaved = new Date().toLocaleTimeString('de-DE', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  second: '2-digit',
+                });
                 this.hasSavedSession = true;
               } catch (e) {
-                console.warn("Autosave fehlgeschlagen (Storage evtl. voll oder blockiert).");
+                console.warn(
+                  'Autosave fehlgeschlagen (Storage evtl. voll oder blockiert).',
+                );
               }
             }, 500);
           },
 
           restoreSession() {
             try {
-              const saved = localStorage.getItem("pickmaster_autosave");
+              const saved = localStorage.getItem('pickmaster_autosave');
+              const savedSizes = localStorage.getItem('pickmaster_item_sizes');
+
+              if (savedSizes) {
+                this.itemSizes = JSON.parse(savedSizes);
+              }
+
               if (saved) {
                 this.jsonData = JSON.parse(saved);
-                this.items = this.jsonData.ContainerPattern.Layers.$values[0].ArrangedItems.$values;
+                this.items =
+                  this.jsonData.ContainerPattern.Layers.$values[0].ArrangedItems.$values;
 
                 if (this.jsonData.Size) {
                   this.width = this.jsonData.Size.x;
@@ -416,17 +1035,24 @@
                 this.extractItemIdsAndAssignColors();
                 this.selectedItem = null;
                 this.selectedItems = [];
-                this.lastSaved = new Date().toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+                this.lastSaved = new Date().toLocaleTimeString('de-DE', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  second: '2-digit',
+                });
               }
             } catch (e) {
-              alert("Fehler beim Wiederherstellen der Sitzung. Die Daten sind möglicherweise beschädigt.");
+              alert(
+                'Fehler beim Wiederherstellen der Sitzung. Die Daten sind möglicherweise beschädigt.',
+              );
               this.clearSession();
             }
           },
 
           clearSession() {
             try {
-              localStorage.removeItem("pickmaster_autosave");
+              localStorage.removeItem('pickmaster_autosave');
+              localStorage.removeItem('pickmaster_item_sizes');
               this.hasSavedSession = false;
             } catch (e) {}
           },
@@ -437,12 +1063,17 @@
 
           // Hilfsfunktion: Ist das Element gerade ausgewählt
           isSelected(item) {
-            return (this.selectedItem && this.selectedItem.Id === item.Id) || this.selectedItems.some((i) => i.Id === item.Id);
+            return (
+              (this.selectedItem && this.selectedItem.Id === item.Id) ||
+              this.selectedItems.some((i) => i.Id === item.Id)
+            );
           },
 
-          // Behandelt den Klick ins Leere ODER den Start des Shift-Auswahlrahmens
           startSelectionOrDeselect(e) {
-            if (document.activeElement && typeof document.activeElement.blur === "function") {
+            if (
+              document.activeElement &&
+              typeof document.activeElement.blur === 'function'
+            ) {
               document.activeElement.blur();
             }
 
@@ -460,17 +1091,14 @@
             this.selStartX = (e.clientX - rect.left) * scaleX;
             this.selStartY = (e.clientY - rect.top) * scaleY;
 
-            // Setzt den Startpunkt auf die aktuellen Koordinaten.
-            // Ohne Bewegung bleibt die Box 0x0 groß und unsichtbar.
             this.selCurrentX = this.selStartX;
             this.selCurrentY = this.selStartY;
           },
 
           startDrag(e, item) {
-            // Prüfen, ob das geklickte Item bereits zu einer Mehrfachauswahl gehört
+            if (e.shiftKey) return;
             const isMultiSelected = this.selectedItems.some((i) => i.Id === item.Id);
 
-            // Nur wenn es NICHT Teil der Gruppe ist, machen wir eine Einzelauswahl
             if (!isMultiSelected) {
               this.selectItem(item);
             }
@@ -482,7 +1110,9 @@
             this.dragStartY = e.clientY;
 
             this.dragStartPositions = [];
-            const itemsToDrag = isMultiSelected ? this.selectedItems : [this.selectedItem];
+            const itemsToDrag = isMultiSelected
+              ? this.selectedItems
+              : [this.selectedItem];
 
             itemsToDrag.forEach((i) => {
               if (i) {
@@ -521,7 +1151,6 @@
               let newX = dragData.initX + dx * scaleX;
               let newY = dragData.initY + dy * scaleY;
 
-              // Verhindern, dass die Elemente den sichtbaren Bereich verlassen
               if (newX < 0) newX = 0;
               if (newX > this.width) newX = this.width;
               if (newY < 0) newY = 0;
@@ -541,7 +1170,9 @@
               let maxY = Math.max(this.selStartY, this.selCurrentY);
 
               this.selectedItems = this.items.filter((item) => {
-                return item.X >= minX && item.X <= maxX && item.Y >= minY && item.Y <= maxY;
+                return (
+                  item.X >= minX && item.X <= maxX && item.Y >= minY && item.Y <= maxY
+                );
               });
 
               if (this.selectedItems.length === 1) {
@@ -575,7 +1206,7 @@
           },
 
           handleKeyDown(e) {
-            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
               e.preventDefault();
               if (this.jsonData) {
                 this.triggerAutosave();
@@ -583,7 +1214,7 @@
               return;
             }
 
-            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "e") {
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'e') {
               e.preventDefault();
               if (this.jsonData) {
                 this.saveFile();
@@ -591,12 +1222,18 @@
               return;
             }
 
+            if (e.key === 'Escape') {
+              e.preventDefault();
+              this.startSelectionOrDeselect(e);
+              return;
+            }
+
             if (!this.selectedItem && this.selectedItems.length === 0) return;
 
             const activeTag = document.activeElement.tagName.toUpperCase();
-            if (["INPUT", "TEXTAREA", "SELECT"].includes(activeTag)) return;
+            if (['INPUT', 'TEXTAREA', 'SELECT'].includes(activeTag)) return;
 
-            if (e.key === "Delete" || e.key === "Backspace") {
+            if (e.key === 'Delete' || e.key === 'Backspace') {
               e.preventDefault();
               if (this.selectedItem) this.deleteSelectedItem();
               else this.deleteSelectedItems();
@@ -604,19 +1241,21 @@
             }
 
             const step = e.shiftKey ? 10 : 1;
-            const itemsToMove = this.selectedItem ? [this.selectedItem] : this.selectedItems;
+            const itemsToMove = this.selectedItem
+              ? [this.selectedItem]
+              : this.selectedItems;
             let moved = false;
 
-            if (e.key === "ArrowUp") {
+            if (e.key === 'ArrowUp') {
               itemsToMove.forEach((i) => (i.Y = parseFloat((i.Y - step).toFixed(1))));
               moved = true;
-            } else if (e.key === "ArrowDown") {
+            } else if (e.key === 'ArrowDown') {
               itemsToMove.forEach((i) => (i.Y = parseFloat((i.Y + step).toFixed(1))));
               moved = true;
-            } else if (e.key === "ArrowLeft") {
+            } else if (e.key === 'ArrowLeft') {
               itemsToMove.forEach((i) => (i.X = parseFloat((i.X - step).toFixed(1))));
               moved = true;
-            } else if (e.key === "ArrowRight") {
+            } else if (e.key === 'ArrowRight') {
               itemsToMove.forEach((i) => (i.X = parseFloat((i.X + step).toFixed(1))));
               moved = true;
             }
@@ -631,7 +1270,8 @@
             reader.onload = (e) => {
               try {
                 this.jsonData = JSON.parse(e.target.result);
-                this.items = this.jsonData.ContainerPattern.Layers.$values[0].ArrangedItems.$values;
+                this.items =
+                  this.jsonData.ContainerPattern.Layers.$values[0].ArrangedItems.$values;
 
                 if (this.jsonData.Size) {
                   this.width = this.jsonData.Size.x;
@@ -643,10 +1283,44 @@
                 this.selectedItems = [];
                 this.triggerAutosave();
               } catch (error) {
-                alert("Die Datei konnte nicht gelesen werden. Ist es eine gültige JSON?");
+                alert('Die Datei konnte nicht gelesen werden. Ist es eine gültige JSON?');
               }
             };
             reader.readAsText(file);
+          },
+
+          loadItemFiles(event) {
+            const files = event.target.files;
+            if (!files.length) return;
+
+            Array.from(files).forEach((file) => {
+              const reader = new FileReader();
+              reader.onload = (e) => {
+                try {
+                  const itemData = JSON.parse(e.target.result);
+                  if (itemData.Id && itemData.Size) {
+                    this.itemSizes = {
+                      ...this.itemSizes,
+                      [itemData.Id]: {
+                        x: itemData.Size.x,
+                        y: itemData.Size.y,
+                      },
+                    };
+                  }
+                } catch (error) {
+                  console.error('Fehler beim Lesen der Item-Datei:', file.name);
+                }
+              };
+              reader.readAsText(file);
+            });
+            event.target.value = '';
+          },
+
+          getItemDimensions(itemId) {
+            if (this.itemSizes[itemId]) {
+              return this.itemSizes[itemId];
+            }
+            return { x: 88, y: 52 };
           },
 
           extractItemIdsAndAssignColors() {
@@ -662,7 +1336,12 @@
 
           getItemColorClass(itemId) {
             if (this.itemColors[itemId]) return this.itemColors[itemId];
-            return { bg: "bg-gray-200", text: "text-gray-800", border: "border-gray-400", indicator: "bg-gray-600" };
+            return {
+              bg: 'bg-gray-200',
+              text: 'text-gray-800',
+              border: 'border-gray-400',
+              indicator: 'bg-gray-600',
+            };
           },
 
           selectItem(item) {
@@ -670,36 +1349,129 @@
             this.selectedItems = [];
 
             this.$nextTick(() => {
-              const listItem = document.getElementById("list-item-" + item.Id);
+              const listItem = document.getElementById('list-item-' + item.Id);
               if (listItem) {
-                listItem.scrollIntoView({ behavior: "smooth", block: "center" });
+                listItem.scrollIntoView({
+                  behavior: 'smooth',
+                  block: 'center',
+                });
               }
             });
           },
 
+          handleItemClick(e, item) {
+            // Wenn Shift gedrückt ist -> Multi-Select Modus
+            if (e.shiftKey) {
+              // Falls aktuell nur ein einzelnes Element markiert war, schiebe es ins Array
+              if (this.selectedItem) {
+                this.selectedItems = [this.selectedItem];
+                this.selectedItem = null;
+              }
+
+              // Prüfen, ob das angeklickte Item schon in der Gruppe ist
+              const index = this.selectedItems.findIndex((i) => i.Id === item.Id);
+
+              if (index > -1) {
+                // War schon markiert -> wieder aus der Gruppe entfernen (Toggle-Effekt)
+                this.selectedItems.splice(index, 1);
+              } else {
+                // War noch nicht markiert -> zur Gruppe hinzufügen
+                this.selectedItems.push(item);
+              }
+
+              // Komfort-Funktion: Wenn nach dem Abwählen/Hinzufügen genau 1 Element übrig ist,
+              // wechseln wir wieder in den Single-Edit-Modus (linke Spalte Eigenschaften)
+              if (this.selectedItems.length === 1) {
+                this.selectItem(this.selectedItems[0]);
+              } else if (this.selectedItems.length === 0) {
+                this.selectedItem = null;
+              }
+            } else {
+              // Ganz normaler Klick ohne Shift -> Einzelnes Element auswählen
+              this.selectItem(item);
+            }
+          },
+
           // Wendet einen Eigenschaftswert auf ALLE markierten Elemente an (Multi-Edit)
           applyMulti(property, value) {
-            if (value === "" || (isNaN(value) && property === "RZ")) return;
+            if (value === '' || (isNaN(value) && property === 'RZ')) return;
             this.selectedItems.forEach((item) => {
               item[property] = value;
             });
             this.triggerAutosave();
           },
 
+          alignSelected(direction) {
+            if (this.selectedItems.length < 2) return;
+
+            let targetValue;
+            if (direction === 'left') {
+              // Finde den kleinsten X-Wert
+              targetValue = Math.min(...this.selectedItems.map((i) => i.X));
+              this.selectedItems.forEach((i) => (i.X = targetValue));
+            } else if (direction === 'right') {
+              // Finde den größten X-Wert
+              targetValue = Math.max(...this.selectedItems.map((i) => i.X));
+              this.selectedItems.forEach((i) => (i.X = targetValue));
+            } else if (direction === 'top') {
+              // Finde den kleinsten Y-Wert (Oben)
+              targetValue = Math.min(...this.selectedItems.map((i) => i.Y));
+              this.selectedItems.forEach((i) => (i.Y = targetValue));
+            } else if (direction === 'bottom') {
+              // Finde den größten Y-Wert (Unten)
+              targetValue = Math.max(...this.selectedItems.map((i) => i.Y));
+              this.selectedItems.forEach((i) => (i.Y = targetValue));
+            }
+            this.triggerAutosave();
+          },
+
+          distributeSelected(axis) {
+            if (this.selectedItems.length < 3) return;
+
+            const sorted = [...this.selectedItems].sort(
+              (a, b) => (a.Order || 0) - (b.Order || 0),
+            );
+
+            if (axis === 'horizontal') {
+              // 2. Finde die absoluten räumlichen Außengrenzen
+              const minX = Math.min(...this.selectedItems.map((i) => i.X));
+              const maxX = Math.max(...this.selectedItems.map((i) => i.X));
+              const step = (maxX - minX) / (sorted.length - 1);
+
+              // 3. Positionen in der perfekten Reihenfolge zuweisen
+              sorted.forEach((item, index) => {
+                item.X = parseFloat((minX + index * step).toFixed(1));
+              });
+            } else if (axis === 'vertical') {
+              // 2. Finde die absoluten räumlichen Außengrenzen
+              const minY = Math.min(...this.selectedItems.map((i) => i.Y));
+              const maxY = Math.max(...this.selectedItems.map((i) => i.Y));
+              const step = (maxY - minY) / (sorted.length - 1);
+
+              sorted.forEach((item, index) => {
+                item.Y = parseFloat((minY + index * step).toFixed(1));
+              });
+            }
+            this.triggerAutosave();
+          },
+
           generateUUID() {
-            return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
               const r = (Math.random() * 16) | 0,
-                v = c == "x" ? r : (r & 0x3) | 0x8;
+                v = c == 'x' ? r : (r & 0x3) | 0x8;
               return v.toString(16);
             });
           },
 
           addNewItem() {
-            const maxOrder = this.items.length > 0 ? Math.max(...this.items.map((i) => i.Order)) : 0;
-            const defaultItemId = this.uniqueItemIds.length > 0 ? this.uniqueItemIds[0] : "";
+            const maxOrder =
+              this.items.length > 0 ? Math.max(...this.items.map((i) => i.Order)) : 0;
+            const defaultItemId =
+              this.uniqueItemIds.length > 0 ? this.uniqueItemIds[0] : '';
 
             const newItem = {
-              $type: "PickMaster.Core.Process.Container.ArrangedItemModel, PickMaster.Core",
+              $type:
+                'PickMaster.Core.Process.Container.ArrangedItemModel, PickMaster.Core',
               ItemId: defaultItemId,
               X: parseFloat((this.width / 2).toFixed(1)),
               Y: parseFloat((this.height / 2).toFixed(1)),
@@ -720,10 +1492,12 @@
 
             // Um zu verhindern, dass die neue Box sofort einen "Duplikat"-Warnhinweis hat,
             // berechnen wir die nächste freie Order-Nummer für die Kopie.
-            const maxOrder = this.items.length > 0 ? Math.max(...this.items.map((i) => i.Order)) : 0;
+            const maxOrder =
+              this.items.length > 0 ? Math.max(...this.items.map((i) => i.Order)) : 0;
 
             const clonedItem = {
-              $type: "PickMaster.Core.Process.Container.ArrangedItemModel, PickMaster.Core",
+              $type:
+                'PickMaster.Core.Process.Container.ArrangedItemModel, PickMaster.Core',
               ItemId: this.selectedItem.ItemId,
               X: parseFloat((this.selectedItem.X + 20).toFixed(1)),
               Y: parseFloat((this.selectedItem.Y + 20).toFixed(1)),
@@ -742,7 +1516,7 @@
           deleteSelectedItem() {
             if (!this.selectedItem) return;
 
-            if (confirm("Dieses Element wirklich löschen?")) {
+            if (confirm('Dieses Element wirklich löschen?')) {
               const index = this.items.findIndex((i) => i.Id === this.selectedItem.Id);
               if (index > -1) this.items.splice(index, 1);
               this.selectedItem = null;
@@ -766,12 +1540,16 @@
 
           saveFile() {
             const dataStr = JSON.stringify(this.jsonData, null, 2);
-            const blob = new Blob([dataStr], { type: "application/json" });
+            const blob = new Blob([dataStr], {
+              type: 'application/json',
+            });
             const url = URL.createObjectURL(blob);
 
-            const link = document.createElement("a");
+            const link = document.createElement('a');
             link.href = url;
-            link.download = this.jsonData.Name ? `${this.jsonData.Name}_mod.json` : "ContainerModel_mod.json";
+            link.download = this.jsonData.Name
+              ? `${this.jsonData.Name}_mod.json`
+              : 'ContainerModel_mod.json';
             document.body.appendChild(link);
             link.click();
 
