@@ -145,11 +145,18 @@
             <div class="flex gap-2 text-xs font-normal border-l pl-4 border-gray-300">
               <template x-for="(color, id) in itemColors" :key="id">
                 <div
-                  class="flex items-center gap-1 bg-white px-2 py-1 rounded shadow-sm border border-gray-200"
+                  @click="toggleVisibility(id)"
+                  class="cursor-pointer flex items-center gap-1.5 px-2 py-1 rounded shadow-sm border transition-all duration-200 select-none"
+                  :class="isHidden(id) ? 'bg-gray-100 border-dashed border-gray-300 opacity-60' : 'bg-white border-gray-200 hover:bg-gray-50 hover:shadow'"
+                  title="Klicken zum Ein-/Ausblenden"
                 >
-                  <div class="w-3 h-3 rounded-sm" :class="color.bg"></div>
+                  <div
+                    class="w-3 h-3 rounded-sm transition-colors duration-200"
+                    :class="isHidden(id) ? 'bg-gray-300' : color.bg"
+                  ></div>
                   <span
-                    class="text-gray-600 truncate w-16"
+                    class="truncate w-16 transition-all duration-200"
+                    :class="isHidden(id) ? 'text-gray-400 line-through' : 'text-gray-700 font-medium'"
                     :title="id"
                     x-text="id"
                   ></span>
@@ -204,8 +211,9 @@
             <template x-for="item in items" :key="item.Id">
               <div
                 class="absolute transition-transform transform -translate-x-1/2 -translate-y-1/2 no-select opacity-85"
-                :style="`left: ${(item.X / width) * 100}%; top: ${(item.Y / height) * 100}%; width: ${(getItemDimensions(item.ItemId).x / width) * 100}%; height: ${(getItemDimensions(item.ItemId).y / height) * 100}%; z-index: ${getDynamicZIndex(item)};`"
-                :class="(isSelected(item) ? 'scale-110 ' : 'hover:scale-105 ') + (dragMode ? 'cursor-move ' : 'cursor-pointer ') + (isDragging && isSelected(item) ? 'opacity-75 ' : 'duration-200')"                @mousedown.stop="startDrag($event, item)"
+                :style="`display: ${isHidden(item.ItemId) ? 'none' : 'block'}; left: ${(item.X / width) * 100}%; top: ${(item.Y / height) * 100}%; width: ${(getItemDimensions(item.ItemId).x / width) * 100}%; height: ${(getItemDimensions(item.ItemId).y / height) * 100}%; z-index: ${getDynamicZIndex(item)};`"
+                :class="(isSelected(item) ? 'scale-110 ' : 'hover:scale-105 ') + (dragMode ? 'cursor-move ' : 'cursor-pointer ') + (isDragging && isSelected(item) ? 'opacity-75 ' : 'duration-200')"
+                @mousedown.stop="startDrag($event, item)"
                 @click.stop="handleItemClick($event, item)"
                 :title="`Order: ${item.Order} | X: ${item.X}, Y: ${item.Y} | RZ: ${item.RZ}°${hasDuplicateOrder(item.Order) ? '\nACHTUNG: Diese Order-Nummer existiert mehrfach!' : ''}`"
               >
@@ -568,8 +576,8 @@
                 ></path>
               </svg>
               <p class="text-gray-400 text-sm">
-                Wähle ein Item in der Visualisierung aus oder markiere mehrere mit
-                einem Rahmen, um deren Werte anzupassen.
+                Wähle ein Item in der Visualisierung aus oder markiere mehrere mit einem
+                Rahmen, um deren Werte anzupassen.
               </p>
             </div>
           </template>
@@ -594,8 +602,9 @@
             class="flex-1 overflow-y-auto border border-gray-200 rounded shadow-inner bg-white"
           >
             <ul class="divide-y divide-gray-100">
-              <template x-for="item in items" :key="item.Id">
+              <template x-for="item in [...items].sort((a, b) => (a.Order || 0) - (b.Order || 0))" :key="item.Id">
                 <li
+                  x-show="!isHidden(item.ItemId)"
                   :id="'list-item-' + item.Id"
                   @click="handleItemClick($event, item)"
                   class="p-2 cursor-pointer transition-colors flex justify-between items-center hover:bg-blue-50"
@@ -652,8 +661,9 @@
       >
         <h3 class="text-2xl font-bold text-gray-900 mb-2">Neue Konfiguration starten</h3>
         <p class="text-gray-500 mb-6">
-          Lade eine Container-JSON-Datei, um den Editor zu starten. <br>
-          Für eine exakte Größen-Darstellung kannst du im Anschluss die passenden Item-Dateien hinzufügen.
+          Lade eine Container-JSON-Datei, um den Editor zu starten. <br />
+          Für eine exakte Größen-Darstellung kannst du im Anschluss die passenden
+          Item-Dateien hinzufügen.
         </p>
 
         <button
@@ -742,6 +752,7 @@
           itemSizes: [],
           selectedItem: null,
           selectedItems: [],
+          hiddenItemIds: {},
           currentMaxOrder: 0,
           width: 1000,
           height: 1000,
@@ -1021,7 +1032,8 @@
 
               if (saved) {
                 this.jsonData = JSON.parse(saved);
-                this.items = this.jsonData.ContainerPattern.Layers.$values[0].ArrangedItems.$values;
+                this.items =
+                  this.jsonData.ContainerPattern.Layers.$values[0].ArrangedItems.$values;
 
                 if (this.jsonData.Size) {
                   this.width = this.jsonData.Size.x;
@@ -1057,7 +1069,26 @@
             this.dragMode = !this.dragMode;
           },
 
-          // Hilfsfunktion: Ist das Item gerade ausgewählt
+          toggleVisibility(itemId) {
+            const isNowHidden = !this.hiddenItemIds[itemId];
+
+            this.hiddenItemIds = {
+              ...this.hiddenItemIds,
+              [itemId]: isNowHidden,
+            };
+
+            if (isNowHidden) {
+              this.selectedItems = this.selectedItems.filter((i) => i.ItemId != itemId);
+              if (this.selectedItem && this.selectedItem.ItemId == itemId) {
+                this.selectedItem = null;
+              }
+            }
+          },
+
+          isHidden(itemId) {
+            return this.hiddenItemIds[itemId] === true;
+          },
+
           isSelected(item) {
             return (
               (this.selectedItem && this.selectedItem.Id === item.Id) ||
@@ -1166,6 +1197,8 @@
               let maxY = Math.max(this.selStartY, this.selCurrentY);
 
               this.selectedItems = this.items.filter((item) => {
+                if (this.isHidden(item.ItemId)) return false;
+
                 return (
                   item.X >= minX && item.X <= maxX && item.Y >= minY && item.Y <= maxY
                 );
@@ -1280,7 +1313,9 @@
                 this.selectedItems = [];
                 this.triggerAutosave();
               } catch (error) {
-                alert('Die Datei konnte nicht gelesen werden. Bitte prüfe, ob es sich um eine gültige JSON-Datei handelt.');
+                alert(
+                  'Die Datei konnte nicht gelesen werden. Bitte prüfe, ob es sich um eine gültige JSON-Datei handelt.',
+                );
               }
             };
             reader.readAsText(file);
@@ -1292,33 +1327,35 @@
 
             let matchedAtLeastOne = false;
             const uploadedIds = [];
-            let filesProcessed = 0; // Zähler für die fertigen Dateien
+            let filesProcessed = 0;
 
-            // Hilfsfunktion, die nach jeder Datei aufgerufen wird
             const checkCompletion = () => {
               filesProcessed++;
-              // Wenn alle Dateien durchgelaufen sind, machen wir den Check
               if (filesProcessed === files.length) {
-                if (uploadedIds.length > 0 && !matchedAtLeastOne && this.uniqueItemIds.length > 0) {
+                if (
+                  uploadedIds.length > 0 &&
+                  !matchedAtLeastOne &&
+                  this.uniqueItemIds.length > 0
+                ) {
                   alert(
                     `Hinweis: Die hochgeladenen Item-IDs stimmen nicht mit den IDs im Container überein.\n\n` +
-                    `Hochgeladene IDs: ${uploadedIds.join(', ')}\n` +
-                    `Im Container erwartet: ${this.uniqueItemIds.join(', ')}`
+                      `Hochgeladene IDs: ${uploadedIds.join(', ')}\n` +
+                      `Im Container erwartet: ${this.uniqueItemIds.join(', ')}`,
                   );
                 }
-                event.target.value = ''; // Input zurücksetzen
+                event.target.value = '';
               }
             };
 
             Array.from(files).forEach((file) => {
               const reader = new FileReader();
-              
+
               reader.onload = (e) => {
                 try {
                   const itemData = JSON.parse(e.target.result);
                   if (itemData.Id && itemData.Size) {
                     uploadedIds.push(itemData.Id);
-                    
+
                     this.itemSizes = {
                       ...this.itemSizes,
                       [itemData.Id]: {
@@ -1335,13 +1372,13 @@
                 } catch (error) {
                   console.error('Fehler beim Lesen der Item-Datei:', file.name);
                 } finally {
-                  checkCompletion(); // Datei erfolgreich (oder fehlerhaft) geparst
+                  checkCompletion();
                 }
               };
 
               reader.onerror = () => {
                 console.error('Fehler beim Laden der Datei:', file.name);
-                checkCompletion(); // Auch bei einem Lade-Fehler hochzählen, damit wir nicht hängen bleiben
+                checkCompletion();
               };
 
               reader.readAsText(file);
@@ -1402,22 +1439,20 @@
               const index = this.selectedItems.findIndex((i) => i.Id === item.Id);
 
               if (index > -1) {
-                // War schon markiert -> wieder aus der Gruppe entfernen (Toggle-Effekt)
+                // War schon markiert
                 this.selectedItems.splice(index, 1);
               } else {
-                // War noch nicht markiert -> zur Gruppe hinzufügen
+                // War noch nicht markiert
                 this.selectedItems.push(item);
               }
 
-              // Komfort-Funktion: Wenn nach dem Abwählen/Hinzufügen genau 1 Element übrig ist,
-              // wechseln wir wieder in den Single-Edit-Modus (linke Spalte Eigenschaften)
               if (this.selectedItems.length === 1) {
                 this.selectItem(this.selectedItems[0]);
               } else if (this.selectedItems.length === 0) {
                 this.selectedItem = null;
               }
             } else {
-              // Ganz normaler Klick ohne Shift -> Einzelnes Element auswählen
+              // Ganz normaler Klick ohne Shift
               this.selectItem(item);
             }
           },
@@ -1463,17 +1498,17 @@
             );
 
             if (axis === 'horizontal') {
-              // 2. Finde die absoluten räumlichen Außengrenzen
+              // Finde die absoluten räumlichen Außengrenzen
               const minX = Math.min(...this.selectedItems.map((i) => i.X));
               const maxX = Math.max(...this.selectedItems.map((i) => i.X));
               const step = (maxX - minX) / (sorted.length - 1);
 
-              // 3. Positionen in der perfekten Reihenfolge zuweisen
+              // Positionen in der perfekten Reihenfolge zuweisen
               sorted.forEach((item, index) => {
                 item.X = parseFloat((minX + index * step).toFixed(1));
               });
             } else if (axis === 'vertical') {
-              // 2. Finde die absoluten räumlichen Außengrenzen
+              // Finde die absoluten räumlichen Außengrenzen
               const minY = Math.min(...this.selectedItems.map((i) => i.Y));
               const maxY = Math.max(...this.selectedItems.map((i) => i.Y));
               const step = (maxY - minY) / (sorted.length - 1);
@@ -1585,11 +1620,11 @@
           },
 
           updateMaxOrder() {
-            this.currentMaxOrder = this.items.length > 0 
-              ? Math.max(...this.items.map((i) => i.Order || 0)) 
-              : 0;
+            this.currentMaxOrder =
+              this.items.length > 0
+                ? Math.max(...this.items.map((i) => i.Order || 0))
+                : 0;
           },
-
         };
       }
     </script>
