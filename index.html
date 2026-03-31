@@ -349,7 +349,7 @@
               >
                 <span>
                   <span x-text="selectedItems.length"></span>
-                  Elemente ausgewählt
+                  Items ausgewählt
                 </span>
                 <button
                   @click="selectedItems = []"
@@ -362,7 +362,7 @@
 
               <div class="flex flex-col">
                 <label class="text-sm font-medium text-gray-700"
-                  >ItemId für alle setzen</label
+                  >Item-ID (für Auswahl)</label
                 >
                 <select
                   @change="applyMulti('ItemId', $event.target.value)"
@@ -377,7 +377,7 @@
 
               <div class="flex flex-col">
                 <label class="text-sm font-medium text-gray-700"
-                  >Z Rotation (RZ°) für alle setzen</label
+                  >Z Rotation (für Auswahl)</label
                 >
                 <input
                   type="number"
@@ -543,7 +543,7 @@
                 >
                   Alle
                   <span x-text="selectedItems.length"></span>
-                  markierten löschen
+                  markierten Items löschen
                 </button>
               </div>
             </div>
@@ -568,7 +568,7 @@
                 ></path>
               </svg>
               <p class="text-gray-400 text-sm">
-                Wähle ein Element in der Visualisierung aus oder markiere mehrere mit
+                Wähle ein Item in der Visualisierung aus oder markiere mehrere mit
                 einem Rahmen, um deren Werte anzupassen.
               </p>
             </div>
@@ -578,7 +578,7 @@
         <div class="p-4 flex flex-col flex-1 overflow-hidden">
           <div class="flex justify-between items-center mb-3">
             <h2 class="text-lg font-semibold text-gray-800">
-              Element-Liste (
+              Item-Liste (
               <span x-text="items.length"></span>
               )
             </h2>
@@ -652,14 +652,15 @@
       >
         <h3 class="text-2xl font-bold text-gray-900 mb-2">Neue Konfiguration starten</h3>
         <p class="text-gray-500 mb-6">
-          Lade eine Container-JSON, um den Editor zu starten. <br>
-          Für eine exakte Darstellung kannst du danach die passenden Item-Dateien hinzufügen.</p>
+          Lade eine Container-JSON-Datei, um den Editor zu starten. <br>
+          Für eine exakte Größen-Darstellung kannst du im Anschluss die passenden Item-Dateien hinzufügen.
+        </p>
 
         <button
           @click="document.getElementById('fileInput').click()"
           class="cursor-pointer w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg shadow transition mb-4"
         >
-          JSON Datei auswählen
+          Container-JSON-Datei auswählen
         </button>
 
         <!-- Letzte Sitzung wiederherstellen -->
@@ -741,6 +742,7 @@
           itemSizes: [],
           selectedItem: null,
           selectedItems: [],
+          currentMaxOrder: 0,
           width: 1000,
           height: 1000,
 
@@ -962,7 +964,10 @@
             this.$watch(
               'jsonData',
               (value) => {
-                if (value) this.triggerAutosave();
+                if (value) {
+                  this.triggerAutosave();
+                  this.updateMaxOrder();
+                }
               },
               { deep: true },
             );
@@ -1016,14 +1021,14 @@
 
               if (saved) {
                 this.jsonData = JSON.parse(saved);
-                this.items =
-                  this.jsonData.ContainerPattern.Layers.$values[0].ArrangedItems.$values;
+                this.items = this.jsonData.ContainerPattern.Layers.$values[0].ArrangedItems.$values;
 
                 if (this.jsonData.Size) {
                   this.width = this.jsonData.Size.x;
                   this.height = this.jsonData.Size.y;
                 }
                 this.extractItemIdsAndAssignColors();
+                this.updateMaxOrder();
                 this.selectedItem = null;
                 this.selectedItems = [];
                 this.lastSaved = new Date().toLocaleTimeString('de-DE', {
@@ -1052,7 +1057,7 @@
             this.dragMode = !this.dragMode;
           },
 
-          // Hilfsfunktion: Ist das Element gerade ausgewählt
+          // Hilfsfunktion: Ist das Item gerade ausgewählt
           isSelected(item) {
             return (
               (this.selectedItem && this.selectedItem.Id === item.Id) ||
@@ -1137,7 +1142,7 @@
             const dx = e.clientX - this.dragStartX;
             const dy = e.clientY - this.dragStartY;
 
-            // Alle ausgewählten Elemente gleichzeitig bewegen
+            // Alle ausgewählten Items gleichzeitig bewegen
             this.dragStartPositions.forEach((dragData) => {
               let newX = dragData.initX + dx * scaleX;
               let newY = dragData.initY + dy * scaleY;
@@ -1270,11 +1275,12 @@
                 }
 
                 this.extractItemIdsAndAssignColors();
+                this.updateMaxOrder();
                 this.selectedItem = null;
                 this.selectedItems = [];
                 this.triggerAutosave();
               } catch (error) {
-                alert('Die Datei konnte nicht gelesen werden. Ist es eine gültige JSON?');
+                alert('Die Datei konnte nicht gelesen werden. Bitte prüfe, ob es sich um eine gültige JSON-Datei handelt.');
               }
             };
             reader.readAsText(file);
@@ -1295,7 +1301,7 @@
               if (filesProcessed === files.length) {
                 if (uploadedIds.length > 0 && !matchedAtLeastOne && this.uniqueItemIds.length > 0) {
                   alert(
-                    `Achtung: Keine der hochgeladenen Item-IDs passt zu diesem Container!\n\n` +
+                    `Hinweis: Die hochgeladenen Item-IDs stimmen nicht mit den IDs im Container überein.\n\n` +
                     `Hochgeladene IDs: ${uploadedIds.join(', ')}\n` +
                     `Im Container erwartet: ${this.uniqueItemIds.join(', ')}`
                   );
@@ -1488,8 +1494,6 @@
           },
 
           addNewItem() {
-            const maxOrder =
-              this.items.length > 0 ? Math.max(...this.items.map((i) => i.Order)) : 0;
             const defaultItemId =
               this.uniqueItemIds.length > 0 ? this.uniqueItemIds[0] : '';
 
@@ -1503,7 +1507,7 @@
               RX: 0.0,
               RY: 0.0,
               RZ: 0.0,
-              Order: maxOrder + 1,
+              Order: this.currentMaxOrder + 1,
               Id: this.generateUUID(),
             };
 
@@ -1513,11 +1517,6 @@
 
           duplicateSelectedItem() {
             if (!this.selectedItem) return;
-
-            // Um zu verhindern, dass die neue Box sofort einen "Duplikat"-Warnhinweis hat,
-            // berechnen wir die nächste freie Order-Nummer für die Kopie.
-            const maxOrder =
-              this.items.length > 0 ? Math.max(...this.items.map((i) => i.Order)) : 0;
 
             const clonedItem = {
               $type:
@@ -1529,7 +1528,7 @@
               RX: this.selectedItem.RX,
               RY: this.selectedItem.RY,
               RZ: this.selectedItem.RZ,
-              Order: maxOrder + 1,
+              Order: this.currentMaxOrder + 1,
               Id: this.generateUUID(),
             };
 
@@ -1540,16 +1539,15 @@
           deleteSelectedItem() {
             if (!this.selectedItem) return;
 
-            if (confirm('Dieses Element wirklich löschen?')) {
+            if (confirm('Dieses Item wirklich löschen?')) {
               const index = this.items.findIndex((i) => i.Id === this.selectedItem.Id);
               if (index > -1) this.items.splice(index, 1);
               this.selectedItem = null;
             }
           },
 
-          // Löscht markierten Elemente auf einmal
           deleteSelectedItems() {
-            if (confirm(`${this.selectedItems.length} Elemente wirklich löschen?`)) {
+            if (confirm(`${this.selectedItems.length} Items wirklich löschen?`)) {
               const idsToDelete = this.selectedItems.map((i) => i.Id);
               for (let i = this.items.length - 1; i >= 0; i--) {
                 if (idsToDelete.includes(this.items[i].Id)) {
@@ -1582,15 +1580,16 @@
           },
 
           getDynamicZIndex(item) {
-            const maxOrder = this.items.length > 0 ? Math.max(...this.items.map((i) => i.Order)) : 0;
-            if (this.isSelected(item)) return maxOrder+1;
-            const numericId = parseInt(item.Order, 10);            
-            if (!isNaN(numericId)) {
-               return numericId;
-            } else {
-               return this.uniqueItemIds.indexOf(item.Order) + 10;
-            }
+            if (this.isSelected(item)) return this.currentMaxOrder + 1;
+            return parseInt(item.Order, 10) || 0;
           },
+
+          updateMaxOrder() {
+            this.currentMaxOrder = this.items.length > 0 
+              ? Math.max(...this.items.map((i) => i.Order || 0)) 
+              : 0;
+          },
+
         };
       }
     </script>
