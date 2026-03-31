@@ -14,6 +14,24 @@ export default defineConfig({
         theme_color: '#2563eb',
         background_color: '#f9fafb',
         display: 'standalone',
+        icons: [
+          {
+            src: 'pwa-192x192.png',
+            sizes: '192x192',
+            type: 'image/png'
+          },
+          {
+            src: 'pwa-512x512.png',
+            sizes: '512x512',
+            type: 'image/png'
+          },
+          {
+            src: 'pwa-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any maskable' // Empfohlen für Android-Geräte, damit das Icon in verschiedene Formen (Kreis, Tropfen, etc.) passt
+          }
+        ]
       }
     })
   ],
