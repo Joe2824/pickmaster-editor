@@ -14,6 +14,7 @@ export default defineConfig({
         theme_color: '#2563eb',
         background_color: '#f9fafb',
         display: 'standalone',
+        includeAssets: ['favicon.svg', 'pwa-192x192.png', 'pwa-512x512.png'],
         icons: [
           {
             src: 'pwa-192x192.png',
