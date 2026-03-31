@@ -280,8 +280,12 @@
                   x-show="showRxRyBadge && ((item.RX || 0) !== 0 || (item.RY || 0) !== 0)"
                   class="absolute -bottom-2 -right-2 bg-gray-800 text-white text-[9px] font-mono px-1 py-0.5 rounded shadow-sm border border-gray-600 pointer-events-none z-10 flex flex-col items-end leading-tight opacity-90"
                 >
-                  <span x-show="(item.RX || 0) !== 0">RX: <span x-text="item.RX"></span>°</span>
-                  <span x-show="(item.RY || 0) !== 0">RY: <span x-text="item.RY"></span>°</span>
+                  <span x-show="(item.RX || 0) !== 0"
+                    >RX: <span x-text="item.RX"></span>°</span
+                  >
+                  <span x-show="(item.RY || 0) !== 0"
+                    >RY: <span x-text="item.RY"></span>°</span
+                  >
                 </div>
               </div>
             </template>
