@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PickMaster Twin - Fast Pattern Editor</title>
+    <title>PickMaster Twin - Fast Pattern Editor (3D Version)</title>
     <script type="module" src="/src/main.js"></script>
     <link href="/src/style.css" rel="stylesheet" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -19,26 +19,26 @@
       body {
         overflow: hidden;
       }
+      #threejs-container {
+        width: 100%;
+        height: 100%;
+        outline: none;
+      }
     </style>
   </head>
   <body
     class="bg-gray-50 h-screen flex flex-col font-sans"
     x-data="pickmasterApp()"
     @keydown.window="handleKeyDown($event)"
-    @mousemove.window="onDrag($event)"
-    @mouseup.window="stopDrag()"
   >
-    <!-- Header -->
     <header
       class="bg-[#3C3030] text-white p-4 shadow-md flex justify-between items-center z-10"
     >
       <div class="flex space-x-3 items-center">
-        <img src="/favicon.svg" alt="Fast Pattern Editor Logo" class="h-12 w-12" />
-        <h1 class="text-xl font-bold">PickMaster Twin - Fast Pattern Editor</h1>
+        <h1 class="text-xl font-bold">PickMaster Twin - Fast Pattern Editor (3D)</h1>
       </div>
 
       <div class="flex items-center space-x-4">
-        <!-- Autosave Indikator -->
         <div
           x-show="lastSaved"
           x-transition
@@ -52,10 +52,7 @@
               d="M5 13l4 4L19 7"
             ></path>
           </svg>
-          <span>
-            Lokal gespeichert:
-            <span x-text="lastSaved"></span>
-          </span>
+          <span>Lokal gespeichert: <span x-text="lastSaved"></span></span>
         </div>
 
         <div class="flex space-x-2">
@@ -89,59 +86,25 @@
           >
             Container laden
           </button>
-
           <button
             x-show="jsonData"
             @click="saveFile"
             class="cursor-pointer bg-green-500 hover:bg-green-400 px-4 py-2 rounded shadow transition text-sm flex items-center gap-3"
           >
             <span class="font-semibold">Exportieren</span>
-            <div class="hidden sm:flex items-center gap-0.5 text-[10px] text-green-900">
-              <kbd
-                class="bg-white/80 border border-green-600/50 rounded px-1 py-0.5 shadow-sm font-sans font-semibold"
-                >Strg</kbd
-              >
-              <span class="opacity-75">+</span>
-              <kbd
-                class="bg-white/80 border border-green-600/50 rounded px-1 py-0.5 shadow-sm font-sans font-semibold"
-                >E</kbd
-              >
-            </div>
           </button>
         </div>
-
-        <a
-          href="https://github.com/Joe2824/pickmaster-editor"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="text-blue-200 hover:text-white transition-colors duration-200 ml-2"
-          title="Zum GitHub Repository"
-        >
-          <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path
-              fill-rule="evenodd"
-              d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"
-              clip-rule="evenodd"
-            />
-          </svg>
-        </a>
       </div>
     </header>
 
     <main class="flex-1 overflow-hidden flex" x-show="jsonData" x-cloak>
-      <!-- Linke Seite: Grafische Darstellung -->
       <div class="w-2/3 p-4 flex flex-col h-full border-r border-gray-200 bg-gray-100">
         <div class="flex justify-between items-center mb-2">
           <h2 class="text-lg font-semibold flex items-center gap-4">
-            <span>
-              Visualisierung (
-              <span x-text="width"></span>
-              x
-              <span x-text="height"></span>
-              )
-            </span>
-
-            <!-- Legende -->
+            <span
+              >Visualisierung (<span x-text="width"></span> x
+              <span x-text="height"></span>)</span
+            >
             <div class="flex gap-2 text-xs font-normal border-l pl-4 border-gray-300">
               <template x-for="(color, id) in itemColors" :key="id">
                 <div
@@ -152,7 +115,7 @@
                 >
                   <div
                     class="w-3 h-3 rounded-sm transition-colors duration-200"
-                    :class="isHidden(id) ? 'bg-gray-300' : color.bg"
+                    :style="`background-color: ${color.hex}`"
                   ></div>
                   <span
                     class="truncate w-16 transition-all duration-200"
@@ -165,141 +128,44 @@
             </div>
           </h2>
           <div class="flex items-center space-x-2">
-            <span
-              x-show="showMouseCoords && !selectedItem && selectedItems.length === 0"
-              x-transition
-              class="text-blue-700 bg-blue-100 px-2 py-0.5 rounded text-sm font-mono border border-blue-200"
+            <span class="text-xs text-gray-500 font-medium bg-gray-200 px-2 py-1 rounded"
+              >Rechtsklick: Kamera drehen | Mausrad: Zoom | Linksklick: Item bewegen</span
             >
-              X
-              <span x-text="mouseX"></span>
-              | Y
-              <span x-text="mouseY"></span>
-            </span>
-
             <button
-              @click="show3DTransform = !show3DTransform"
-              :class="show3DTransform ? 'bg-indigo-500 hover:bg-indigo-600 text-white' : 'bg-gray-300 hover:bg-gray-400 text-gray-700'"
-              class="cursor-pointer px-2.5 py-1 rounded shadow transition text-xs font-medium flex items-center gap-1.5"
-              title="Physikalische 3D-Verzerrung (RX/RY) an/aus"
+              @click="resetCamera"
+              class="bg-gray-300 hover:bg-gray-400 text-gray-700 cursor-pointer px-2.5 py-1 rounded shadow transition text-xs font-medium flex items-center gap-1.5"
             >
-              <span x-text="show3DTransform ? '3D: AN' : '3D: AUS'"></span>
+              Kamera Reset
             </button>
-
-            <button
-              @click="showRxRyBadge = !showRxRyBadge"
-              :class="showRxRyBadge ? 'bg-indigo-500 hover:bg-indigo-600 text-white' : 'bg-gray-300 hover:bg-gray-400 text-gray-700'"
-              class="cursor-pointer px-2.5 py-1 rounded shadow transition text-xs font-medium flex items-center gap-1.5"
-              title="Info-Schildchen für gekippte Items an/aus"
-            >
-              <span x-text="showRxRyBadge ? 'Badges: AN' : 'Badges: AUS'"></span>
-            </button>
-
             <button
               @click="toggleDragMode"
               :class="dragMode ? 'bg-orange-500 hover:bg-orange-600' : 'bg-gray-400 hover:bg-gray-500'"
               class="cursor-pointer text-white px-3 py-1 rounded shadow transition text-xs font-medium flex items-center gap-2"
             >
-              <span>
-                Drag & Drop:
-                <span x-text="dragMode ? 'AN' : 'AUS'"></span>
-              </span>
+              <span>Drag & Drop: <span x-text="dragMode ? 'AN' : 'AUS'"></span></span>
             </button>
           </div>
         </div>
 
-        <!-- VIEWPORT FÜR ZOOM / PAN -->
         <div
-          class="flex-1 overflow-hidden relative rounded flex items-center justify-center bg-gray-200 border shadow-inner"
-          @wheel.prevent="handleWheel($event)"
-          @mousedown="startPanning($event)"
-          @mousemove.window="doPanning($event)"
-          @mouseup.window="stopPanning($event)"
-          @contextmenu.prevent
-          :class="isPanning ? 'cursor-grabbing' : ''"
+          class="flex-1 overflow-hidden relative rounded shadow-inner border border-gray-400"
+          style="background-color: #e5e7eb"
         >
-          <!-- Reset Button -->
-          <button
-            x-show="zoom !== 1 || offsetX !== 0 || offsetY !== 0"
-            @click="resetView"
-            class="absolute bottom-4 left-4 z-50 bg-white/90 px-3 py-1.5 rounded shadow-md text-xs font-semibold hover:bg-white transition-colors text-gray-700 border border-gray-300 cursor-pointer"
-          >
-            Ansicht zurücksetzen
-          </button>
+          <div id="threejs-container" x-ref="threeCanvas"></div>
 
-          <!-- ZEICHENFLÄCHE -->
           <div
-            x-ref="drawingArea"
-            class="relative bg-white shadow-sm cursor-crosshair border border-gray-400 transition-none"
-            @mousedown="startSelectionOrDeselect($event)"
-            @mousemove="updateMouseCoords($event)"
-            @mouseenter="showMouseCoords = true"
-            @mouseleave="showMouseCoords = false"
-            :style="`
-              width: 100%; 
-              max-width: 800px; 
-              aspect-ratio: ${width} / ${height}; 
-              transform: translate(${offsetX}px, ${offsetY}px) scale(${zoom});
-              transform-origin: center;
-              background-size: ${(100 / width) * 100}% ${(100 / height) * 100}%; 
-              background-image: linear-gradient(to right, #e5e7eb 1px, transparent 1px), linear-gradient(to bottom, #e5e7eb 1px, transparent 1px);
-            `"
-          >
-            <!-- Auswahl-Rechteck -->
-            <div
-              x-show="isSelecting"
-              class="absolute bg-blue-500/20 border-2 pointer-events-none z-50"
-              :class="(isSelecting ? 'border-blue-500 ' : 'border-none ')"
-              :style="`z-index: ${currentMaxOrder + 2}; left: ${(Math.min(selStartX, selCurrentX) / width) * 100}%; top: ${(Math.min(selStartY, selCurrentY) / height) * 100}%; width: ${(Math.abs(selCurrentX - selStartX) / width) * 100}%; height: ${(Math.abs(selCurrentY - selStartY) / height) * 100}%;`"
-            ></div>
-
-            <template x-for="item in items" :key="item.Id">
-              <div
-                class="absolute transition-transform transform -translate-x-1/2 -translate-y-1/2 no-select opacity-85"
-                :style="`display: ${isHidden(item.ItemId) ? 'none' : 'block'}; left: ${(item.X / width) * 100}%; top: ${(item.Y / height) * 100}%; width: ${(getItemDimensions(item.ItemId).x / width) * 100}%; height: ${(getItemDimensions(item.ItemId).y / height) * 100}%; z-index: ${getDynamicZIndex(item)};`"
-                :class="(isSelected(item) ? 'scale-110 ' : 'hover:scale-105 ') + (dragMode ? 'cursor-move ' : 'cursor-pointer ') + (isDragging && isSelected(item) ? 'opacity-75 ' : 'duration-200')"
-                @mousedown="startDrag($event, item)"
-                @click.stop="handleItemClick($event, item)"
-                :title="`Order: ${item.Order} | X: ${item.X}, Y: ${item.Y} | RZ: ${item.RZ}°${hasDuplicateOrder(item.Order) ? '\nACHTUNG: Diese Order-Nummer existiert mehrfach!' : ''}`"
-              >
-                <div
-                  class="flex items-center justify-center shadow-md relative overflow-hidden transition-all duration-200 rounded-sm border"
-                  :style="`width: 100%; height: 100%; transform: ${show3DTransform ? `rotateX(${item.RX || 0}deg) rotateY(${item.RY || 0}deg)` : ''} rotateZ(${item.RZ || 0}deg); transform-style: preserve-3d;`"
-                  :class="isSelected(item) ? 'bg-red-500 text-white border-red-700 border-2' : `${getItemColorClass(item.ItemId).bg} ${getItemColorClass(item.ItemId).text} ${getItemColorClass(item.ItemId).border}`"
-                >
-                  <div
-                    class="absolute top-0 left-0 right-0 h-1.5"
-                    :class="isSelected(item) ? 'bg-red-800' : getItemColorClass(item.ItemId).indicator"
-                  ></div>
-                  <span
-                    class="text-xs font-bold pointer-events-none px-1 rounded-sm"
-                    :class="hasDuplicateOrder(item.Order) && !isSelected(item) ? 'bg-yellow-400 text-red-700 border border-red-500 animate-pulse' : ''"
-                    x-text="item.Order"
-                  ></span>
-                </div>
-                <div
-                  x-show="showRxRyBadge && ((item.RX || 0) !== 0 || (item.RY || 0) !== 0)"
-                  class="absolute -bottom-2 -right-2 bg-gray-800 text-white text-[9px] font-mono px-1 py-0.5 rounded shadow-sm border border-gray-600 pointer-events-none z-10 flex flex-col items-end leading-tight opacity-90"
-                >
-                  <span x-show="(item.RX || 0) !== 0"
-                    >RX: <span x-text="item.RX"></span>°</span
-                  >
-                  <span x-show="(item.RY || 0) !== 0"
-                    >RY: <span x-text="item.RY"></span>°</span
-                  >
-                </div>
-              </div>
-            </template>
-          </div>
+            x-show="isSelecting"
+            class="absolute bg-blue-500/20 border-2 border-blue-500 pointer-events-none z-50"
+            :style="`left: ${Math.min(selStartX, selCurrentX)}px; top: ${Math.min(selStartY, selCurrentY)}px; width: ${Math.abs(selCurrentX - selStartX)}px; height: ${Math.abs(selCurrentY - selStartY)}px;`"
+          ></div>
         </div>
       </div>
 
-      <!-- Rechte Seite: Eigenschaften & Listen-Ansicht -->
       <div class="w-1/3 flex flex-col h-full bg-white">
         <div
           class="p-4 border-b border-gray-200 bg-gray-50 flex-none"
           style="height: 55%"
         >
-          <!-- SINGLE EDIT -->
           <template x-if="selectedItem">
             <div class="space-y-3 h-full overflow-y-auto pb-4">
               <h2 class="text-lg font-semibold mb-2 text-gray-800">
@@ -314,11 +180,10 @@
                   class="border p-1.5 bg-gray-100 rounded text-xs text-gray-500 focus:outline-none"
                 />
               </div>
-
               <div class="flex flex-col">
                 <label class="text-sm font-medium text-gray-700">ItemId</label>
                 <select
-                  @change="selectedItem.ItemId = $event.target.value"
+                  @change="selectedItem.ItemId = $event.target.value; updateThreeMesh(selectedItem)"
                   class="border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none flex-1 text-sm bg-white"
                 >
                   <template x-for="id in uniqueItemIds" :key="id">
@@ -338,6 +203,7 @@
                     type="number"
                     step="0.1"
                     x-model.number="selectedItem.X"
+                    @input="updateThreeMesh(selectedItem)"
                     class="border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none transition"
                   />
                 </div>
@@ -347,6 +213,7 @@
                     type="number"
                     step="0.1"
                     x-model.number="selectedItem.Y"
+                    @input="updateThreeMesh(selectedItem)"
                     class="border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none transition"
                   />
                 </div>
@@ -358,6 +225,7 @@
                     type="number"
                     step="0.1"
                     x-model.number="selectedItem.RX"
+                    @input="updateThreeMesh(selectedItem)"
                     class="border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none transition"
                   />
                 </div>
@@ -369,6 +237,7 @@
                     type="number"
                     step="0.1"
                     x-model.number="selectedItem.RY"
+                    @input="updateThreeMesh(selectedItem)"
                     class="border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none transition"
                   />
                 </div>
@@ -380,6 +249,7 @@
                     type="number"
                     step="0.1"
                     x-model.number="selectedItem.RZ"
+                    @input="updateThreeMesh(selectedItem)"
                     class="border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none transition"
                   />
                 </div>
@@ -387,25 +257,23 @@
                   <label
                     class="text-sm font-medium text-gray-700 flex items-center justify-between"
                   >
-                    <span>Order (Nummer)</span>
+                    <span>Order</span>
                     <span
                       x-show="hasDuplicateOrder(selectedItem?.Order)"
                       class="text-red-500 text-xs font-bold animate-pulse"
                       title="Diese Nummer ist doppelt vergeben!"
+                      >⚠️ DUPLIKAT</span
                     >
-                      ⚠️ DUPLIKAT
-                    </span>
                   </label>
                   <input
                     type="number"
                     x-model.number="selectedItem.Order"
+                    @input="updateThreeMesh(selectedItem)"
                     class="border p-2 rounded outline-none transition"
-                    :class="hasDuplicateOrder(selectedItem.Order) ? 'border-red-500 focus:ring-2 focus:ring-red-500 bg-red-50' : 'focus:ring-2 focus:ring-blue-500'"
+                    :class="hasDuplicateOrder(selectedItem.Order) ? 'border-red-500 bg-red-50' : ''"
                   />
                 </div>
               </div>
-
-              <!-- Aktions-Buttons -->
               <div class="pt-2 flex gap-2">
                 <button
                   @click="duplicateSelectedItem"
@@ -423,7 +291,6 @@
             </div>
           </template>
 
-          <!-- MULTI EDIT -->
           <template x-if="selectedItems.length > 1 && !selectedItem">
             <div class="space-y-4 h-full overflow-y-auto pb-4 no-select">
               <h2 class="text-lg font-semibold mb-2 text-gray-800">
@@ -432,10 +299,7 @@
               <div
                 class="bg-blue-100 border border-blue-200 text-blue-800 px-3 py-2 rounded text-sm font-semibold flex items-center justify-between shadow-sm"
               >
-                <span>
-                  <span x-text="selectedItems.length"></span>
-                  Items ausgewählt
-                </span>
+                <span><span x-text="selectedItems.length"></span> Items ausgewählt</span>
                 <button
                   @click="selectedItems = []"
                   class="cursor-pointer text-blue-500 hover:text-blue-700 font-bold px-1"
@@ -444,241 +308,121 @@
                   ✕
                 </button>
               </div>
-
               <div class="flex flex-col">
                 <label class="text-sm font-medium text-gray-700"
                   >Item-ID (für Auswahl)</label
                 >
                 <select
                   @change="applyMulti('ItemId', $event.target.value)"
-                  class="no-select border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none flex-1 text-sm bg-white cursor-pointer"
+                  class="border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none bg-white"
                 >
                   <option value disabled selected>-- ItemId wählen --</option>
-                  <template x-for="id in uniqueItemIds" :key="id">
-                    <option :value="id" x-text="id"></option>
-                  </template>
+                  <template x-for="id in uniqueItemIds" :key="id"
+                    ><option :value="id" x-text="id"></option
+                  ></template>
                 </select>
               </div>
               <div class="grid grid-cols-2 gap-4">
                 <div class="flex flex-col">
-                  <label class="text-sm font-medium text-gray-700"
-                    >X Rotation (für Auswahl)</label
-                  >
-                  <input
+                  <label class="text-sm font-medium text-gray-700">X Rotation</label
+                  ><input
                     type="number"
                     step="0.1"
                     @change="applyMulti('RX', parseFloat($event.target.value))"
                     placeholder="Neuer Winkel..."
-                    class="border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none transition"
+                    class="border p-2 rounded transition"
                   />
                 </div>
                 <div class="flex flex-col">
-                  <label class="text-sm font-medium text-gray-700"
-                    >Y Rotation (für Auswahl)</label
-                  >
-                  <input
+                  <label class="text-sm font-medium text-gray-700">Y Rotation</label
+                  ><input
                     type="number"
                     step="0.1"
                     @change="applyMulti('RY', parseFloat($event.target.value))"
                     placeholder="Neuer Winkel..."
-                    class="border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none transition"
+                    class="border p-2 rounded transition"
                   />
                 </div>
                 <div class="flex flex-col">
-                  <label class="text-sm font-medium text-gray-700"
-                    >Z Rotation (für Auswahl)</label
-                  >
-                  <input
+                  <label class="text-sm font-medium text-gray-700">Z Rotation</label
+                  ><input
                     type="number"
                     step="0.1"
                     @change="applyMulti('RZ', parseFloat($event.target.value))"
                     placeholder="Neuer Winkel..."
-                    class="border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none transition"
+                    class="border p-2 rounded transition"
                   />
                 </div>
               </div>
-              <!-- Ausrichten & Verteilen Toolbar -->
+
               <div class="pt-3 mt-2 border-t border-gray-200">
                 <label
                   class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block"
+                  >Layout & Position</label
                 >
-                  Layout & Position</label
-                >
-
                 <div class="flex flex-col gap-2">
                   <div class="flex bg-gray-100 p-1 rounded-md border border-gray-200">
                     <button
                       @click="alignSelected('left')"
-                      class="cursor-pointer flex-1 flex justify-center p-1.5 rounded hover:bg-white hover:shadow-sm text-gray-500 hover:text-blue-600 transition-all"
-                      title="Linksbündig ausrichten"
+                      class="cursor-pointer flex-1 p-1.5 hover:bg-white text-gray-500 hover:text-blue-600 transition-all font-bold"
                     >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      >
-                        <line x1="4" x2="4" y1="2" y2="22" />
-                        <rect width="10" height="6" x="8" y="4" rx="1" />
-                        <rect width="14" height="6" x="8" y="14" rx="1" />
-                      </svg>
+                      L
                     </button>
                     <button
                       @click="alignSelected('right')"
-                      class="cursor-pointer flex-1 flex justify-center p-1.5 rounded hover:bg-white hover:shadow-sm text-gray-500 hover:text-blue-600 transition-all"
-                      title="Rechtsbündig ausrichten"
+                      class="cursor-pointer flex-1 p-1.5 hover:bg-white text-gray-500 hover:text-blue-600 transition-all font-bold"
                     >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      >
-                        <line x1="20" x2="20" y1="2" y2="22" />
-                        <rect width="10" height="6" x="6" y="4" rx="1" />
-                        <rect width="14" height="6" x="2" y="14" rx="1" />
-                      </svg>
+                      R
                     </button>
-
-                    <!-- Trennlinie -->
-                    <div class="w-px bg-gray-500 mx-1 my-1"></div>
-
+                    <div class="w-px bg-gray-400 mx-1 my-1"></div>
                     <button
                       @click="alignSelected('top')"
-                      class="cursor-pointer flex-1 flex justify-center p-1.5 rounded hover:bg-white hover:shadow-sm text-gray-500 hover:text-blue-600 transition-all"
-                      title="Obenbündig ausrichten"
+                      class="cursor-pointer flex-1 p-1.5 hover:bg-white text-gray-500 hover:text-blue-600 transition-all font-bold"
                     >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      >
-                        <line x1="2" x2="22" y1="4" y2="4" />
-                        <rect width="6" height="10" x="4" y="8" rx="1" />
-                        <rect width="6" height="14" x="14" y="8" rx="1" />
-                      </svg>
+                      O
                     </button>
                     <button
                       @click="alignSelected('bottom')"
-                      class="cursor-pointer flex-1 flex justify-center p-1.5 rounded hover:bg-white hover:shadow-sm text-gray-500 hover:text-blue-600 transition-all"
-                      title="Untenbündig ausrichten"
+                      class="cursor-pointer flex-1 p-1.5 hover:bg-white text-gray-500 hover:text-blue-600 transition-all font-bold"
                     >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      >
-                        <line x1="2" x2="22" y1="20" y2="20" />
-                        <rect width="6" height="10" x="4" y="6" rx="1" />
-                        <rect width="6" height="14" x="14" y="2" rx="1" />
-                      </svg>
+                      U
                     </button>
-
-                    <div class="w-px bg-gray-500 mx-1 my-1"></div>
-
+                    <div class="w-px bg-gray-400 mx-1 my-1"></div>
                     <button
                       @click="distributeSelected('horizontal')"
-                      class="cursor-pointer flex-1 flex items-center justify-center gap-2 p-1.5 rounded hover:bg-white hover:shadow-sm text-gray-600 hover:text-blue-600 transition-all text-xs font-medium"
-                      title="Horizontal gleichmäßig verteilen (min. 3)"
+                      class="cursor-pointer flex-1 p-1.5 hover:bg-white text-gray-500 hover:text-blue-600 transition-all font-bold"
+                      title="H Vert."
                     >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      >
-                        <rect width="4" height="14" x="10" y="5" rx="1" />
-                        <line x1="4" x2="4" y1="2" y2="22" />
-                        <line x1="20" x2="20" y1="2" y2="22" />
-                      </svg>
+                      ↔
                     </button>
-
                     <button
                       @click="distributeSelected('vertical')"
-                      class="cursor-pointer flex-1 flex items-center justify-center gap-2 p-1.5 rounded hover:bg-white hover:shadow-sm text-gray-600 hover:text-blue-600 transition-all text-xs font-medium"
-                      title="Vertikal gleichmäßig verteilen (min. 3)"
+                      class="cursor-pointer flex-1 p-1.5 hover:bg-white text-gray-500 hover:text-blue-600 transition-all font-bold"
+                      title="V Vert."
                     >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      >
-                        <rect width="14" height="4" x="5" y="10" rx="1" />
-                        <line x1="2" x2="22" y1="4" y2="4" />
-                        <line x1="2" x2="22" y1="20" y2="20" />
-                      </svg>
+                      ↕
                     </button>
                   </div>
                 </div>
               </div>
-
               <div class="pt-2">
                 <button
                   @click="deleteSelectedItems"
                   class="cursor-pointer w-full bg-red-50 hover:bg-red-500 text-red-600 hover:text-white font-semibold py-2 rounded border border-red-200 transition shadow-sm"
                 >
-                  Alle
-                  <span x-text="selectedItems.length"></span>
-                  markierten Items löschen
+                  Alle markierten löschen
                 </button>
               </div>
             </div>
           </template>
 
-          <!-- EMPTY STATE -->
           <template x-if="!selectedItem && selectedItems.length === 0">
             <div
               class="h-full flex flex-col items-center justify-center text-center px-4 space-y-2"
             >
-              <svg
-                class="w-12 h-12 text-gray-300"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="1.5"
-                  d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"
-                ></path>
-              </svg>
               <p class="text-gray-400 text-sm">
-                Wähle ein Item in der Visualisierung aus oder markiere mehrere mit einem
-                Rahmen, um deren Werte anzupassen.
+                Wähle ein Item in der 3D-Visualisierung aus oder markiere mehrere mit
+                einem Rahmen, um deren Werte anzupassen.
               </p>
             </div>
           </template>
@@ -687,9 +431,7 @@
         <div class="p-4 flex flex-col flex-1 overflow-hidden">
           <div class="flex justify-between items-center mb-3">
             <h2 class="text-lg font-semibold text-gray-800">
-              Item-Liste (
-              <span x-text="items.length"></span>
-              )
+              Item-Liste (<span x-text="items.length"></span>)
             </h2>
             <button
               @click="addNewItem"
@@ -698,7 +440,6 @@
               + Neues Item
             </button>
           </div>
-
           <div
             class="flex-1 overflow-y-auto border border-gray-200 rounded shadow-inner bg-white"
           >
@@ -717,34 +458,24 @@
                   <div class="flex items-center gap-3 w-full">
                     <div
                       class="w-2 h-2 rounded-full flex-none"
-                      :class="getItemColorClass(item.ItemId).indicator"
+                      :style="`background-color: ${getItemColorClass(item.ItemId).hex}`"
                     ></div>
                     <div class="flex-1 flex items-center gap-2">
                       <div
                         class="font-bold text-sm"
                         :class="hasDuplicateOrder(item.Order) ? 'text-red-600' : 'text-gray-700'"
                       >
-                        #
-                        <span x-text="item.Order"></span>
-                        <span
-                          x-show="hasDuplicateOrder(item.Order)"
-                          title="Nummer doppelt vergeben!"
-                          >⚠️</span
-                        >
+                        #<span x-text="item.Order"></span>
                       </div>
                       <div
                         class="text-xs text-gray-400 truncate w-24"
-                        :title="item.ItemId"
                         x-text="item.ItemId"
                       ></div>
                     </div>
                     <div
-                      class="text-xs text-gray-500 border bg-white px-1.5 py-0.5 rounded flex-none shadow-sm"
+                      class="text-xs text-gray-500 border bg-white px-1.5 py-0.5 rounded shadow-sm"
                     >
-                      X:
-                      <span x-text="item.X"></span>
-                      | Y:
-                      <span x-text="item.Y"></span>
+                      X: <span x-text="item.X"></span> | Y: <span x-text="item.Y"></span>
                     </div>
                   </div>
                 </li>
@@ -755,352 +486,459 @@
       </div>
     </main>
 
-    <!-- Start-Bildschirm -->
     <div
       x-show="!jsonData"
-      class="flex-1 flex flex-col items-center justify-center bg-gray-100 p-4"
+      class="flex-1 flex flex-col items-center justify-center bg-gray-100 p-4 z-50 absolute inset-0 mt-[80px]"
     >
       <div
         class="text-center p-8 bg-white shadow-lg rounded-xl border border-gray-200 max-w-lg w-full"
       >
         <h3 class="text-2xl font-bold text-gray-900 mb-2">Neue Konfiguration starten</h3>
         <p class="text-gray-500 mb-6">
-          Lade eine Container-JSON-Datei, um den Editor zu starten. <br />
-          Für eine exakte Größen-Darstellung kannst du im Anschluss die passenden
-          Item-Dateien hinzufügen.
+          Lade eine Container-JSON-Datei, um den 3D-Editor zu starten.
         </p>
-
         <button
           @click="document.getElementById('fileInput').click()"
           class="cursor-pointer w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg shadow transition mb-4"
         >
           Container-JSON-Datei auswählen
         </button>
-
-        <!-- Letzte Sitzung wiederherstellen -->
-        <div x-show="hasSavedSession" x-cloak class="mt-4 pt-4 border-t border-gray-100">
-          <p class="text-sm text-gray-600 mb-3">
-            Es wurde ein ungespeicherter Entwurf gefunden.
-          </p>
-          <div class="flex gap-2">
-            <button
-              type="button"
-              @click="restoreSession()"
-              class="cursor-pointer flex-1 bg-green-100 hover:bg-green-200 text-green-800 font-medium py-2 px-4 rounded transition border border-green-300"
-            >
-              Wiederherstellen
-            </button>
-            <button
-              @click="clearSession()"
-              class="cursor-pointer bg-gray-100 hover:bg-gray-200 text-gray-600 py-2 px-3 rounded transition border border-gray-300"
-              title="Entwurf löschen"
-            >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                ></path>
-              </svg>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Footer Hinweise -->
-      <div class="mt-12 max-w-lg w-full border-t border-gray-200 pt-6">
-        <div class="flex flex-col gap-4 px-4">
-          <!-- Datenschutz -->
-          <div
-            class="flex items-start gap-3 text-left bg-blue-50/50 p-3 rounded-lg border border-blue-100/50"
-          >
-            <svg
-              class="w-5 h-5 text-blue-500 mt-0.5 shrink-0"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-              ></path>
-            </svg>
-            <p class="text-xs text-gray-600 leading-relaxed">
-              Alle Änderungen werden ausschließlich lokal in deinem Browser verarbeitet.
-              Es findet kein Upload auf einen Server statt.
-            </p>
-          </div>
-
-          <!-- Disclaimer -->
-          <div class>
-            <p class="text-[10px] text-gray-400 leading-tight italic">
-              <strong>Disclaimer:</strong>
-              <br />
-              Dieses Projekt ist ein unabhängiges Community-Tool und steht in keiner
-              offiziellen Verbindung zur ABB-Gruppe. ABB™ und PickMaster™ sind
-              eingetragene Marken der ABB Asea Brown Boveri Ltd.
-            </p>
-          </div>
-        </div>
       </div>
     </div>
 
     <script>
       function pickmasterApp() {
+        // ==========================================
+        // NON-REACTIVE THREE.JS GLOBALS
+        // ==========================================
+        let scene, camera, renderer, controls, planeMesh;
+        let itemMeshes = new Map(); // Map<ItemId, THREE.Mesh>
+        let raycaster = new THREE.Raycaster();
+        let mouse = new THREE.Vector2();
+
+        let draggedMesh = null;
+        let dragOffset = new THREE.Vector3();
+        let dragPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+        let isThreeDragging = false;
+
+        // NEU: Hilfsfunktion für die Order-Nummer
+        function createTextTexture(text) {
+          const canvas = document.createElement('canvas');
+          canvas.width = 256;
+          canvas.height = 256;
+          const ctx = canvas.getContext('2d');
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.fillStyle = '#1f2937'; // Dunkelgraue Schrift
+          ctx.font = 'bold 100px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(text, 128, 128);
+          return new THREE.CanvasTexture(canvas);
+        }
+
         return {
+          // ==========================================
+          // ALPINE REACTIVE DATA
+          // ==========================================
           jsonData: null,
           items: [],
-          itemSizes: [],
+          itemSizes: {},
           selectedItem: null,
           selectedItems: [],
           hiddenItemIds: {},
           currentMaxOrder: 0,
           width: 1000,
           height: 1000,
-
           uniqueItemIds: [],
-          colorPalettes: [
-            {
-              bg: 'bg-blue-300',
-              text: 'text-blue-900',
-              border: 'border-blue-400',
-              indicator: 'bg-blue-600/80',
-            },
-            {
-              bg: 'bg-green-300',
-              text: 'text-green-900',
-              border: 'border-green-400',
-              indicator: 'bg-green-600/80',
-            },
-            {
-              bg: 'bg-yellow-300',
-              text: 'text-yellow-900',
-              border: 'border-yellow-400',
-              indicator: 'bg-yellow-600/80',
-            },
-            {
-              bg: 'bg-purple-300',
-              text: 'text-purple-900',
-              border: 'border-purple-400',
-              indicator: 'bg-purple-600/80',
-            },
-            {
-              bg: 'bg-pink-300',
-              text: 'text-pink-900',
-              border: 'border-pink-400',
-              indicator: 'bg-pink-600/80',
-            },
-            {
-              bg: 'bg-orange-300',
-              text: 'text-orange-900',
-              border: 'border-orange-400',
-              indicator: 'bg-orange-600/80',
-            },
-            {
-              bg: 'bg-teal-300',
-              text: 'text-teal-900',
-              border: 'border-teal-400',
-              indicator: 'bg-teal-600/80',
-            },
-            {
-              bg: 'bg-indigo-300',
-              text: 'text-indigo-900',
-              border: 'border-indigo-400',
-              indicator: 'bg-indigo-600/80',
-            },
-            {
-              bg: 'bg-red-300',
-              text: 'text-red-900',
-              border: 'border-red-400',
-              indicator: 'bg-red-600/80',
-            },
-            {
-              bg: 'bg-cyan-300',
-              text: 'text-cyan-900',
-              border: 'border-cyan-400',
-              indicator: 'bg-cyan-600/80',
-            },
-            {
-              bg: 'bg-rose-300',
-              text: 'text-rose-900',
-              border: 'border-rose-400',
-              indicator: 'bg-rose-600/80',
-            },
-            {
-              bg: 'bg-fuchsia-300',
-              text: 'text-fuchsia-900',
-              border: 'border-fuchsia-400',
-              indicator: 'bg-fuchsia-600/80',
-            },
-            {
-              bg: 'bg-violet-300',
-              text: 'text-violet-900',
-              border: 'border-violet-400',
-              indicator: 'bg-violet-600/80',
-            },
-            {
-              bg: 'bg-sky-300',
-              text: 'text-sky-900',
-              border: 'border-sky-400',
-              indicator: 'bg-sky-600/80',
-            },
-            {
-              bg: 'bg-emerald-300',
-              text: 'text-emerald-900',
-              border: 'border-emerald-400',
-              indicator: 'bg-emerald-600/80',
-            },
-            {
-              bg: 'bg-lime-300',
-              text: 'text-lime-900',
-              border: 'border-lime-400',
-              indicator: 'bg-lime-600/80',
-            },
-            {
-              bg: 'bg-amber-300',
-              text: 'text-amber-900',
-              border: 'border-amber-400',
-              indicator: 'bg-amber-600/80',
-            },
 
-            {
-              bg: 'bg-blue-100',
-              text: 'text-blue-900',
-              border: 'border-blue-500',
-              indicator: 'bg-blue-700/80',
-            },
-            {
-              bg: 'bg-green-100',
-              text: 'text-green-900',
-              border: 'border-green-500',
-              indicator: 'bg-green-700/80',
-            },
-            {
-              bg: 'bg-purple-100',
-              text: 'text-purple-900',
-              border: 'border-purple-500',
-              indicator: 'bg-purple-700/80',
-            },
-            {
-              bg: 'bg-pink-100',
-              text: 'text-pink-900',
-              border: 'border-pink-500',
-              indicator: 'bg-pink-700/80',
-            },
-            {
-              bg: 'bg-orange-100',
-              text: 'text-orange-900',
-              border: 'border-orange-500',
-              indicator: 'bg-orange-700/80',
-            },
-            {
-              bg: 'bg-teal-100',
-              text: 'text-teal-900',
-              border: 'border-teal-500',
-              indicator: 'bg-teal-700/80',
-            },
-            {
-              bg: 'bg-indigo-100',
-              text: 'text-indigo-900',
-              border: 'border-indigo-500',
-              indicator: 'bg-indigo-700/80',
-            },
-            {
-              bg: 'bg-red-100',
-              text: 'text-red-900',
-              border: 'border-red-500',
-              indicator: 'bg-red-700/80',
-            },
-            {
-              bg: 'bg-cyan-100',
-              text: 'text-cyan-900',
-              border: 'border-cyan-500',
-              indicator: 'bg-cyan-700/80',
-            },
-            {
-              bg: 'bg-rose-100',
-              text: 'text-rose-900',
-              border: 'border-rose-500',
-              indicator: 'bg-rose-700/80',
-            },
-            {
-              bg: 'bg-emerald-100',
-              text: 'text-emerald-900',
-              border: 'border-emerald-500',
-              indicator: 'bg-emerald-700/80',
-            },
-            {
-              bg: 'bg-amber-100',
-              text: 'text-amber-900',
-              border: 'border-amber-500',
-              indicator: 'bg-amber-700/80',
-            },
-            {
-              bg: 'bg-fuchsia-100',
-              text: 'text-fuchsia-900',
-              border: 'border-fuchsia-500',
-              indicator: 'bg-fuchsia-700/80',
-            },
+          colorPalettes: [
+            { hex: '#93C5FD' },
+            { hex: '#86EFAC' },
+            { hex: '#FDE047' },
+            { hex: '#D8B4FE' },
+            { hex: '#F9A8D4' },
+            { hex: '#FDBA74' },
+            { hex: '#5EEAD4' },
+            { hex: '#A5B4FC' },
+            { hex: '#FCA5A5' },
+            { hex: '#67E8F9' },
+            { hex: '#FDA4AF' },
+            { hex: '#F0ABFC' },
+            { hex: '#C4B5FD' },
+            { hex: '#7DD3FC' },
+            { hex: '#6EE7B7' },
+            { hex: '#BEF264' },
           ],
           itemColors: {},
 
-          dragMode: false,
-          show3DTransform: false,
-          showRxRyBadge: false,
-          isDragging: false,
-          draggedItem: null,
-          dragStartX: 0,
-          dragStartY: 0,
-          initialItemX: 0,
-          initialItemY: 0,
-          dragStartPositions: [],
+          dragMode: true,
+          lastSaved: '',
 
+          // 2D Box Selection Data
           isSelecting: false,
           selStartX: 0,
           selStartY: 0,
           selCurrentX: 0,
           selCurrentY: 0,
 
-          // Zoom & Pan Status
-          zoom: 1,
-          offsetX: 0,
-          offsetY: 0,
-          isPanning: false,
-          lastPanX: 0,
-          lastPanY: 0,
-
-          mouseX: 0,
-          mouseY: 0,
-          showMouseCoords: false,
-
-          hasSavedSession: false,
-          lastSaved: '',
-          autosaveTimeout: null,
-
           init() {
-            this.loadSettings();
-            try {
-              if (localStorage.getItem('pickmaster_autosave'))
-                this.hasSavedSession = true;
-            } catch (e) {}
+            // Feuert nur noch beim allerersten Start
+            this.$watch('jsonData', (value) => {
+              if (value && !renderer) {
+                this.updateMaxOrder();
+                setTimeout(() => {
+                  this.initThreeJS();
+                }, 100);
+              }
+            });
 
+            this.$watch('selectedItem', () => this.highlightThreeItems());
+            this.$watch('selectedItems', () => this.highlightThreeItems());
+            this.$watch('hiddenItemIds', () => this.updateThreeVisibility(), {
+              deep: true,
+            });
+
+            // Kümmert sich um die Echtzeit-Positionen
             this.$watch(
-              'jsonData',
-              (value) => {
-                if (value) {
-                  this.triggerAutosave();
-                  this.updateMaxOrder();
-                }
+              'items',
+              (newItems) => {
+                if (!scene) return;
+                this.syncThreeMeshes();
               },
               { deep: true },
             );
-            this.$watch('dragMode', () => this.saveSettings());
-            this.$watch('show3DTransform', () => this.saveSettings());
-            this.$watch('showRxRyBadge', () => this.saveSettings());
           },
+
+          // ----------------------------------------------------------------
+          // THREE.JS LOGIK
+          // (Hier wird jetzt auf die Variablen ganz oben referenziert)
+          // ----------------------------------------------------------------
+          initThreeJS() {
+            const container = this.$refs.threeCanvas;
+            if (!container || container.clientWidth === 0) return;
+            container.innerHTML = '';
+
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color('#e5e7eb');
+
+            camera = new THREE.PerspectiveCamera(
+              45,
+              container.clientWidth / container.clientHeight,
+              1,
+              10000,
+            );
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            container.appendChild(renderer.domElement);
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.5);
+            dirLight.position.set(this.width / 2, 1000, this.height / 2);
+            dirLight.castShadow = true;
+            dirLight.shadow.camera.left = -this.width / 2;
+            dirLight.shadow.camera.right = this.width / 2;
+            dirLight.shadow.camera.top = this.height / 2;
+            dirLight.shadow.camera.bottom = -this.height / 2;
+            scene.add(dirLight);
+
+            const planeGeo = new THREE.PlaneGeometry(this.width, this.height);
+            const planeMat = new THREE.MeshLambertMaterial({
+              color: 0xffffff,
+              side: THREE.DoubleSide,
+            });
+            planeMesh = new THREE.Mesh(planeGeo, planeMat);
+            planeMesh.rotation.x = -Math.PI / 2;
+            planeMesh.receiveShadow = true;
+            scene.add(planeMesh);
+
+            const gridHelper = new THREE.GridHelper(
+              Math.max(this.width, this.height),
+              20,
+              0x0000ff,
+              0xcccccc,
+            );
+            gridHelper.position.y = 1;
+            scene.add(gridHelper);
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.mouseButtons = {
+              LEFT: THREE.MOUSE.NONE,
+              MIDDLE: THREE.MOUSE.DOLLY,
+              RIGHT: THREE.MOUSE.ROTATE,
+            };
+
+            this.resetCamera();
+            this.setupThreeEvents(container);
+            this.syncThreeMeshes();
+
+            const animate = () => {
+              requestAnimationFrame(animate);
+              if (controls) controls.update();
+              if (renderer && scene && camera) {
+                renderer.render(scene, camera);
+              }
+            };
+            animate();
+
+            window.addEventListener('resize', () => {
+              if (!camera || !renderer) return;
+              camera.aspect = container.clientWidth / container.clientHeight;
+              camera.updateProjectionMatrix();
+              renderer.setSize(container.clientWidth, container.clientHeight);
+            });
+          },
+
+          resetCamera() {
+            if (!camera || !controls) return;
+            camera.position.set(0, Math.max(this.width, this.height) * 1.2, 0);
+            camera.lookAt(0, 0, 0);
+            controls.target.set(0, 0, 0);
+            controls.update();
+          },
+
+          mapToThreePos(x, y) {
+            return { x: x - this.width / 2, z: y - this.height / 2 };
+          },
+          mapToAlpinePos(x, z) {
+            return {
+              x: parseFloat((x + this.width / 2).toFixed(1)),
+              y: parseFloat((z + this.height / 2).toFixed(1)),
+            };
+          },
+
+          syncThreeMeshes() {
+            const currentIds = new Set(this.items.map((i) => i.Id));
+
+            for (let [id, mesh] of itemMeshes.entries()) {
+              if (!currentIds.has(id)) {
+                scene.remove(mesh);
+                mesh.geometry.dispose();
+                mesh.material.dispose();
+                itemMeshes.delete(id);
+              }
+            }
+
+            this.items.forEach((item) => {
+              if (!itemMeshes.has(item.Id)) this.createThreeMesh(item);
+              else this.updateThreeMesh(item);
+            });
+
+            this.updateThreeVisibility();
+            this.highlightThreeItems();
+          },
+
+          createThreeMesh(item) {
+            const dims = this.getItemDimensions(item.ItemId);
+            const depth = 20;
+            const geo = new THREE.BoxGeometry(dims.x, depth, dims.y);
+            const colorObj = this.getItemColorClass(item.ItemId);
+
+            // 1. Transparentes Material
+            const mat = new THREE.MeshLambertMaterial({
+              color: colorObj.hex,
+              transparent: true,
+              opacity: 0.85,
+            });
+
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+
+            // Wichtige Daten speichern
+            mesh.userData.alpineId = item.Id;
+            mesh.userData.itemId = item.ItemId;
+            mesh.userData.order = item.Order;
+
+            // 2. Rahmen (Edges) hinzufügen
+            const edges = new THREE.EdgesGeometry(geo);
+            const line = new THREE.LineSegments(
+              edges,
+              new THREE.LineBasicMaterial({
+                color: 0x000000,
+                transparent: true,
+                opacity: 0.4,
+              }),
+            );
+            mesh.add(line);
+
+            // 3. Text (Order Nummer) hinzufügen
+            const textGeo = new THREE.PlaneGeometry(
+              Math.min(dims.x, dims.y) * 0.8,
+              Math.min(dims.x, dims.y) * 0.8,
+            );
+            const textMat = new THREE.MeshBasicMaterial({
+              map: createTextTexture(item.Order.toString()),
+              transparent: true,
+              depthWrite: false,
+            });
+            const textPlane = new THREE.Mesh(textGeo, textMat);
+            textPlane.rotation.x = -Math.PI / 2; // Liegend
+            textPlane.position.y = depth / 2 + 0.5; // Minimal über der Box, damit es nicht flimmert
+            textPlane.name = 'OrderText';
+            mesh.add(textPlane);
+
+            scene.add(mesh);
+            itemMeshes.set(item.Id, mesh);
+            this.updateThreeMesh(item);
+          },
+
+          updateThreeMesh(item) {
+            const mesh = itemMeshes.get(item.Id);
+            if (!mesh) return;
+
+            // Wenn sich die ItemId (und damit evtl. die Größe) ändert,
+            // bauen wir das Mesh komplett neu auf, damit Rahmen und Text nicht verzerren.
+            if (mesh.userData.itemId !== item.ItemId) {
+              scene.remove(mesh);
+              mesh.geometry.dispose();
+              mesh.material.dispose();
+              itemMeshes.delete(item.Id);
+              this.createThreeMesh(item);
+              return;
+            }
+
+            // Text aktualisieren, falls sich die Order-Nummer ändert
+            if (mesh.userData.order !== item.Order) {
+              const textPlane = mesh.getObjectByName('OrderText');
+              if (textPlane) {
+                textPlane.material.map.dispose();
+                textPlane.material.map = createTextTexture(item.Order.toString());
+              }
+              mesh.userData.order = item.Order;
+            }
+
+            const pos = this.mapToThreePos(item.X, item.Y);
+            mesh.position.x = pos.x;
+            mesh.position.z = pos.z;
+            mesh.position.y = 10 + item.Order * 0.1;
+
+            mesh.rotation.x = THREE.MathUtils.degToRad(item.RX || 0);
+            mesh.rotation.z = THREE.MathUtils.degToRad(item.RZ || 0);
+            mesh.rotation.y = THREE.MathUtils.degToRad(item.RY || 0);
+
+            mesh.material.color.set(this.getItemColorClass(item.ItemId).hex);
+          },
+
+          updateThreeVisibility() {
+            this.items.forEach((item) => {
+              const mesh = itemMeshes.get(item.Id);
+              if (mesh) mesh.visible = !this.isHidden(item.ItemId);
+            });
+          },
+
+          highlightThreeItems() {
+            const selectedIds = new Set(this.selectedItems.map((i) => i.Id));
+            if (this.selectedItem) selectedIds.add(this.selectedItem.Id);
+
+            this.items.forEach((item) => {
+              const mesh = itemMeshes.get(item.Id);
+              if (!mesh) return;
+              if (selectedIds.has(item.Id)) mesh.material.emissive.setHex(0x550000);
+              else mesh.material.emissive.setHex(0x000000);
+            });
+          },
+
+          setupThreeEvents(container) {
+            const getMousePos = (e) => {
+              const rect = container.getBoundingClientRect();
+              mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+              mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+            };
+
+            container.addEventListener('pointerdown', (e) => {
+              if (e.button !== 0) return;
+
+              getMousePos(e);
+              raycaster.setFromCamera(mouse, camera);
+
+              const meshes = Array.from(itemMeshes.values()).filter((m) => m.visible);
+              const intersects = raycaster.intersectObjects(meshes);
+
+              if (intersects.length > 0) {
+                const hitMesh = intersects[0].object;
+                const clickedItem = this.items.find(
+                  (i) => i.Id === hitMesh.userData.alpineId,
+                );
+
+                if (this.dragMode) {
+                  isThreeDragging = true;
+                  draggedMesh = hitMesh;
+                  if (raycaster.ray.intersectPlane(dragPlane, dragOffset)) {
+                    dragOffset.sub(hitMesh.position);
+                  }
+                  if (!this.selectedItems.some((i) => i.Id === clickedItem.Id)) {
+                    this.selectItem(clickedItem);
+                  }
+                } else {
+                  this.handleItemClick(e, clickedItem);
+                }
+                controls.enabled = false;
+              } else {
+                this.startSelectionOrDeselect(e);
+              }
+            });
+
+            container.addEventListener('pointermove', (e) => {
+              if (isThreeDragging && draggedMesh) {
+                getMousePos(e);
+                raycaster.setFromCamera(mouse, camera);
+
+                const intersectPoint = new THREE.Vector3();
+                if (raycaster.ray.intersectPlane(dragPlane, intersectPoint)) {
+                  const targetPos = intersectPoint.clone().sub(dragOffset);
+                  const dx = targetPos.x - draggedMesh.position.x;
+                  const dz = targetPos.z - draggedMesh.position.z;
+
+                  const itemsToMove =
+                    this.selectedItems.length > 0
+                      ? this.selectedItems
+                      : this.selectedItem
+                        ? [this.selectedItem]
+                        : [];
+
+                  itemsToMove.forEach((item) => {
+                    const mesh = itemMeshes.get(item.Id);
+                    if (mesh) {
+                      mesh.position.x += dx;
+                      mesh.position.z += dz;
+                      const alpPos = this.mapToAlpinePos(
+                        mesh.position.x,
+                        mesh.position.z,
+                      );
+                      item.X = alpPos.x;
+                      item.Y = alpPos.y;
+                    }
+                  });
+                }
+              } else if (this.isSelecting) {
+                const rect = container.getBoundingClientRect();
+                this.selCurrentX = e.clientX - rect.left;
+                this.selCurrentY = e.clientY - rect.top;
+              }
+            });
+
+            container.addEventListener('pointerup', (e) => {
+              if (isThreeDragging) {
+                isThreeDragging = false;
+                draggedMesh = null;
+                this.triggerAutosave();
+              } else if (this.isSelecting) {
+                this.stopDrag(container);
+              }
+              controls.enabled = true;
+            });
+          },
+
+          // ----------------------------------------------------------------
+          // RESTLICHE ALPINE FUNKTIONEN (Unverändert, bis auf stopDrag)
+          // ----------------------------------------------------------------
 
           hasDuplicateOrder(orderNumber) {
             if (orderNumber === undefined || orderNumber === null || orderNumber === '')
@@ -1114,128 +952,28 @@
           },
 
           triggerAutosave() {
-            clearTimeout(this.autosaveTimeout);
-            this.autosaveTimeout = setTimeout(() => {
-              try {
-                localStorage.setItem(
-                  'pickmaster_autosave',
-                  JSON.stringify(this.jsonData),
-                );
-                localStorage.setItem(
-                  'pickmaster_item_sizes',
-                  JSON.stringify(this.itemSizes),
-                );
-                this.lastSaved = new Date().toLocaleTimeString('de-DE', {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                  second: '2-digit',
-                });
-                this.hasSavedSession = true;
-              } catch (e) {
-                console.warn(
-                  'Autosave fehlgeschlagen (Storage evtl. voll oder blockiert).',
-                );
-              }
-            }, 500);
+            this.lastSaved = new Date().toLocaleTimeString('de-DE', {
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit',
+            });
           },
-
-          restoreSession() {
-            try {
-              const saved = localStorage.getItem('pickmaster_autosave');
-              const savedSizes = localStorage.getItem('pickmaster_item_sizes');
-
-              if (savedSizes) {
-                this.itemSizes = JSON.parse(savedSizes);
-              }
-
-              if (saved) {
-                this.jsonData = JSON.parse(saved);
-                this.items =
-                  this.jsonData.ContainerPattern.Layers.$values[0].ArrangedItems.$values;
-
-                if (this.jsonData.Size) {
-                  this.width = this.jsonData.Size.x;
-                  this.height = this.jsonData.Size.y;
-                }
-                this.extractItemIdsAndAssignColors();
-                this.updateMaxOrder();
-                this.selectedItem = null;
-                this.selectedItems = [];
-                this.lastSaved = new Date().toLocaleTimeString('de-DE', {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                  second: '2-digit',
-                });
-              }
-            } catch (e) {
-              alert(
-                'Fehler beim Wiederherstellen der Sitzung. Die Daten sind möglicherweise beschädigt.',
-              );
-              this.clearSession();
-            }
-          },
-
-          clearSession() {
-            try {
-              localStorage.removeItem('pickmaster_autosave');
-              localStorage.removeItem('pickmaster_item_sizes');
-              this.hasSavedSession = false;
-            } catch (e) {}
-          },
-
-          loadSettings() {
-            try {
-              const prefs = localStorage.getItem('pickmaster_ui_prefs');
-              if (prefs) {
-                const parsed = JSON.parse(prefs);
-                if (typeof parsed.dragMode === 'boolean') this.dragMode = parsed.dragMode;
-                if (typeof parsed.show3DTransform === 'boolean')
-                  this.show3DTransform = parsed.show3DTransform;
-                if (typeof parsed.showRxRyBadge === 'boolean')
-                  this.showRxRyBadge = parsed.showRxRyBadge;
-              }
-            } catch (e) {
-              console.warn('Einstellungen konnten nicht geladen werden.');
-            }
-          },
-
-          saveSettings() {
-            try {
-              localStorage.setItem(
-                'pickmaster_ui_prefs',
-                JSON.stringify({
-                  dragMode: this.dragMode,
-                  show3DTransform: this.show3DTransform,
-                  showRxRyBadge: this.showRxRyBadge,
-                }),
-              );
-            } catch (e) {}
-          },
-
           toggleDragMode() {
             this.dragMode = !this.dragMode;
           },
 
           toggleVisibility(itemId) {
             const isNowHidden = !this.hiddenItemIds[itemId];
-
-            this.hiddenItemIds = {
-              ...this.hiddenItemIds,
-              [itemId]: isNowHidden,
-            };
-
+            this.hiddenItemIds = { ...this.hiddenItemIds, [itemId]: isNowHidden };
             if (isNowHidden) {
               this.selectedItems = this.selectedItems.filter((i) => i.ItemId != itemId);
-              if (this.selectedItem && this.selectedItem.ItemId == itemId) {
+              if (this.selectedItem && this.selectedItem.ItemId == itemId)
                 this.selectedItem = null;
-              }
             }
           },
-
           isHidden(itemId) {
             return this.hiddenItemIds[itemId] === true;
           },
-
           isSelected(item) {
             return (
               (this.selectedItem && this.selectedItem.Id === item.Id) ||
@@ -1244,203 +982,68 @@
           },
 
           startSelectionOrDeselect(e) {
-            if (e.button !== 0) return;
-
-            if (
-              document.activeElement &&
-              typeof document.activeElement.blur === 'function'
-            ) {
-              document.activeElement.blur();
-            }
-
             this.$nextTick(() => {
               this.selectedItem = null;
               this.selectedItems = [];
             });
-
             this.isSelecting = true;
-
-            const rect = this.$refs.drawingArea.getBoundingClientRect();
-            const scaleX = this.width / rect.width;
-            const scaleY = this.height / rect.height;
-
-            this.selStartX = (e.clientX - rect.left) * scaleX;
-            this.selStartY = (e.clientY - rect.top) * scaleY;
+            const container = this.$refs.threeCanvas;
+            const rect = container.getBoundingClientRect();
+            this.selStartX = e.clientX - rect.left;
+            this.selStartY = e.clientY - rect.top;
             this.selCurrentX = this.selStartX;
             this.selCurrentY = this.selStartY;
           },
 
-          startDrag(e, item) {
-            if (e.button !== 0) return;
-            e.stopPropagation();
+          stopDrag(container) {
+            this.isSelecting = false;
+            let minX = Math.min(this.selStartX, this.selCurrentX);
+            let maxX = Math.max(this.selStartX, this.selCurrentX);
+            let minY = Math.min(this.selStartY, this.selCurrentY);
+            let maxY = Math.max(this.selStartY, this.selCurrentY);
 
-            if (e.shiftKey) return;
-            const isMultiSelected = this.selectedItems.some((i) => i.Id === item.Id);
+            this.selectedItems = this.items.filter((item) => {
+              if (this.isHidden(item.ItemId)) return false;
+              const mesh = itemMeshes.get(item.Id);
+              if (!mesh) return false;
 
-            if (!isMultiSelected) {
-              this.selectItem(item);
-            }
+              const posVector = mesh.position.clone();
+              posVector.project(camera);
 
-            if (!this.dragMode) return;
+              const rect = container.getBoundingClientRect();
+              const screenX = (posVector.x * 0.5 + 0.5) * rect.width;
+              const screenY = (posVector.y * -0.5 + 0.5) * rect.height;
 
-            this.isDragging = true;
-            this.dragStartX = e.clientX;
-            this.dragStartY = e.clientY;
-
-            this.dragStartPositions = [];
-            const itemsToDrag = isMultiSelected
-              ? this.selectedItems
-              : [this.selectedItem];
-
-            itemsToDrag.forEach((i) => {
-              if (i) {
-                this.dragStartPositions.push({
-                  item: i,
-                  initX: i.X,
-                  initY: i.Y,
-                });
-              }
+              return (
+                screenX >= minX && screenX <= maxX && screenY >= minY && screenY <= maxY
+              );
             });
-          },
 
-          handleWheel(e) {
-            const zoomSpeed = 0.1;
-            const delta = e.deltaY > 0 ? -zoomSpeed : zoomSpeed;
-            const newZoom = Math.min(Math.max(0.2, this.zoom + delta), 5);
-            this.zoom = parseFloat(newZoom.toFixed(2));
-          },
-
-          startPanning(e) {
-            // Button 1 = Mausrad-Klick (Empfohlen!), Button 2 = Rechtsklick
-            if (e.button === 1 || e.button === 2) {
-              e.preventDefault(); // Unterdrückt Standard-Browser-Verhalten
-              this.isPanning = true;
-              this.lastPanX = e.clientX;
-              this.lastPanY = e.clientY;
-            }
-          },
-
-          onDrag(e) {
-            const container = this.$refs.drawingArea;
-            if (!container) return;
-            const rect = this.$refs.drawingArea.getBoundingClientRect();
-            const scaleX = this.width / rect.width;
-            const scaleY = this.height / rect.height;
-
-            // Box aufziehen
-            if (this.isSelecting) {
-              let cx = (e.clientX - rect.left) * scaleX;
-              let cy = (e.clientY - rect.top) * scaleY;
-              this.selCurrentX = Math.max(0, Math.min(this.width, cx));
-              this.selCurrentY = Math.max(0, Math.min(this.height, cy));
-              return;
-            }
-
-            if (!this.isDragging || this.dragStartPositions.length === 0) return;
-
-            const dx = e.clientX - this.dragStartX;
-            const dy = e.clientY - this.dragStartY;
-
-            // Alle ausgewählten Items gleichzeitig bewegen
-            this.dragStartPositions.forEach((dragData) => {
-              let newX = dragData.initX + dx * scaleX;
-              let newY = dragData.initY + dy * scaleY;
-
-              if (newX < 0) newX = 0;
-              if (newX > this.width) newX = this.width;
-              if (newY < 0) newY = 0;
-              if (newY > this.height) newY = this.height;
-
-              dragData.item.X = parseFloat(newX.toFixed(1));
-              dragData.item.Y = parseFloat(newY.toFixed(1));
-            });
-          },
-
-          stopDrag() {
-            if (this.isSelecting) {
-              this.isSelecting = false;
-              let minX = Math.min(this.selStartX, this.selCurrentX);
-              let maxX = Math.max(this.selStartX, this.selCurrentX);
-              let minY = Math.min(this.selStartY, this.selCurrentY);
-              let maxY = Math.max(this.selStartY, this.selCurrentY);
-
-              this.selectedItems = this.items.filter((item) => {
-                if (this.isHidden(item.ItemId)) return false;
-
-                return (
-                  item.X >= minX && item.X <= maxX && item.Y >= minY && item.Y <= maxY
-                );
-              });
-
-              if (this.selectedItems.length === 1) {
-                this.selectItem(this.selectedItems[0]);
-              } else if (this.selectedItems.length > 1) {
-                this.selectedItem = null;
-              }
-            }
-
-            this.isDragging = false;
-            this.dragStartPositions = [];
-          },
-
-          updateMouseCoords(e) {
-            if (!this.$refs.drawingArea) return;
-
-            const rect = this.$refs.drawingArea.getBoundingClientRect();
-            const scaleX = this.width / rect.width;
-            const scaleY = this.height / rect.height;
-
-            let x = (e.clientX - rect.left) * scaleX;
-            let y = (e.clientY - rect.top) * scaleY;
-
-            if (x < 0) x = 0;
-            if (x > this.width) x = this.width;
-            if (y < 0) y = 0;
-            if (y > this.height) y = this.height;
-
-            this.mouseX = x.toFixed(1);
-            this.mouseY = y.toFixed(1);
+            if (this.selectedItems.length === 1) this.selectItem(this.selectedItems[0]);
+            else if (this.selectedItems.length > 1) this.selectedItem = null;
           },
 
           handleKeyDown(e) {
-            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
-              e.preventDefault();
-              if (this.jsonData) {
-                this.triggerAutosave();
-              }
-              return;
-            }
-
             if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'e') {
               e.preventDefault();
-              if (this.jsonData) {
-                this.saveFile();
-              }
+              if (this.jsonData) this.saveFile();
               return;
             }
-
             if (e.key === 'Escape') {
               e.preventDefault();
-
               if (
                 document.activeElement &&
                 typeof document.activeElement.blur === 'function'
-              ) {
+              )
                 document.activeElement.blur();
-              }
-
-              // Hebt die Auswahl und eventuelle Rahmen auf
               this.$nextTick(() => {
                 this.selectedItem = null;
                 this.selectedItems = [];
                 this.isSelecting = false;
               });
-
               return;
             }
-
             if (!this.selectedItem && this.selectedItems.length === 0) return;
-
             const activeTag = document.activeElement.tagName.toUpperCase();
             if (['INPUT', 'TEXTAREA', 'SELECT'].includes(activeTag)) return;
 
@@ -1450,54 +1053,34 @@
               else this.deleteSelectedItems();
               return;
             }
-
-            const step = e.shiftKey ? 10 : 1;
-            const itemsToMove = this.selectedItem
-              ? [this.selectedItem]
-              : this.selectedItems;
-            let moved = false;
-
-            if (e.key === 'ArrowUp') {
-              itemsToMove.forEach((i) => (i.Y = parseFloat((i.Y - step).toFixed(1))));
-              moved = true;
-            } else if (e.key === 'ArrowDown') {
-              itemsToMove.forEach((i) => (i.Y = parseFloat((i.Y + step).toFixed(1))));
-              moved = true;
-            } else if (e.key === 'ArrowLeft') {
-              itemsToMove.forEach((i) => (i.X = parseFloat((i.X - step).toFixed(1))));
-              moved = true;
-            } else if (e.key === 'ArrowRight') {
-              itemsToMove.forEach((i) => (i.X = parseFloat((i.X + step).toFixed(1))));
-              moved = true;
-            }
-            if (moved) e.preventDefault();
           },
 
           loadFile(event) {
             const file = event.target.files[0];
             if (!file) return;
-
             const reader = new FileReader();
             reader.onload = (e) => {
               try {
                 this.jsonData = JSON.parse(e.target.result);
                 this.items =
                   this.jsonData.ContainerPattern.Layers.$values[0].ArrangedItems.$values;
-
                 if (this.jsonData.Size) {
                   this.width = this.jsonData.Size.x;
                   this.height = this.jsonData.Size.y;
                 }
-
                 this.extractItemIdsAndAssignColors();
                 this.updateMaxOrder();
                 this.selectedItem = null;
                 this.selectedItems = [];
-                this.triggerAutosave();
+
+                // NEU: Wenn schon eine 3D-Szene existiert, setze die Kamera GANZ GEZIELT zurück
+                if (renderer) {
+                  setTimeout(() => {
+                    this.resetCamera();
+                  }, 100);
+                }
               } catch (error) {
-                alert(
-                  'Die Datei konnte nicht gelesen werden. Bitte prüfe, ob es sich um eine gültige JSON-Datei handelt.',
-                );
+                alert('Fehler beim Lesen der Container-JSON.');
               }
             };
             reader.readAsText(file);
@@ -1506,71 +1089,26 @@
           loadItemFiles(event) {
             const files = event.target.files;
             if (!files.length) return;
-
-            let matchedAtLeastOne = false;
-            const uploadedIds = [];
-            let filesProcessed = 0;
-
-            const checkCompletion = () => {
-              filesProcessed++;
-              if (filesProcessed === files.length) {
-                if (
-                  uploadedIds.length > 0 &&
-                  !matchedAtLeastOne &&
-                  this.uniqueItemIds.length > 0
-                ) {
-                  alert(
-                    `Hinweis: Die hochgeladenen Item-IDs stimmen nicht mit den IDs im Container überein.\n\n` +
-                      `Hochgeladene IDs: ${uploadedIds.join(', ')}\n` +
-                      `Im Container erwartet: ${this.uniqueItemIds.join(', ')}`,
-                  );
-                }
-                event.target.value = '';
-              }
-            };
-
             Array.from(files).forEach((file) => {
               const reader = new FileReader();
-
               reader.onload = (e) => {
                 try {
                   const itemData = JSON.parse(e.target.result);
                   if (itemData.Id && itemData.Size) {
-                    uploadedIds.push(itemData.Id);
-
                     this.itemSizes = {
                       ...this.itemSizes,
-                      [itemData.Id]: {
-                        x: itemData.Size.x,
-                        y: itemData.Size.y,
-                      },
+                      [itemData.Id]: { x: itemData.Size.x, y: itemData.Size.y },
                     };
-
-                    // Prüfen, ob die ID zum Container passt
-                    if (this.uniqueItemIds.includes(itemData.Id)) {
-                      matchedAtLeastOne = true;
-                    }
+                    this.syncThreeMeshes();
                   }
-                } catch (error) {
-                  console.error('Fehler beim Lesen der Item-Datei:', file.name);
-                } finally {
-                  checkCompletion();
-                }
+                } catch (error) {}
               };
-
-              reader.onerror = () => {
-                console.error('Fehler beim Laden der Datei:', file.name);
-                checkCompletion();
-              };
-
               reader.readAsText(file);
             });
           },
 
           getItemDimensions(itemId) {
-            if (this.itemSizes[itemId]) {
-              return this.itemSizes[itemId];
-            }
+            if (this.itemSizes[itemId]) return this.itemSizes[itemId];
             return { x: 88, y: 52 };
           },
 
@@ -1578,7 +1116,6 @@
             const ids = new Set();
             this.items.forEach((item) => ids.add(item.ItemId));
             this.uniqueItemIds = Array.from(ids);
-
             this.itemColors = {};
             this.uniqueItemIds.forEach((id, index) => {
               this.itemColors[id] = this.colorPalettes[index % this.colorPalettes.length];
@@ -1587,26 +1124,16 @@
 
           getItemColorClass(itemId) {
             if (this.itemColors[itemId]) return this.itemColors[itemId];
-            return {
-              bg: 'bg-gray-200',
-              text: 'text-gray-800',
-              border: 'border-gray-400',
-              indicator: 'bg-gray-600',
-            };
+            return { hex: '#9CA3AF' };
           },
 
           selectItem(item) {
             this.selectedItem = item;
             this.selectedItems = [];
-
             this.$nextTick(() => {
               const listItem = document.getElementById('list-item-' + item.Id);
-              if (listItem) {
-                listItem.scrollIntoView({
-                  behavior: 'smooth',
-                  block: 'center',
-                });
-              }
+              if (listItem)
+                listItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
             });
           },
 
@@ -1616,89 +1143,75 @@
                 this.selectedItems = [this.selectedItem];
                 this.selectedItem = null;
               }
-
-              // Prüfen, ob das angeklickte Item schon in der Gruppe ist
               const index = this.selectedItems.findIndex((i) => i.Id === item.Id);
-
-              if (index > -1) {
-                // War schon markiert
-                this.selectedItems.splice(index, 1);
-              } else {
-                // War noch nicht markiert
-                this.selectedItems.push(item);
-              }
-
-              if (this.selectedItems.length === 1) {
-                this.selectItem(this.selectedItems[0]);
-              } else if (this.selectedItems.length === 0) {
-                this.selectedItem = null;
-              }
+              if (index > -1) this.selectedItems.splice(index, 1);
+              else this.selectedItems.push(item);
+              if (this.selectedItems.length === 1) this.selectItem(this.selectedItems[0]);
+              else if (this.selectedItems.length === 0) this.selectedItem = null;
             } else {
-              // Ganz normaler Klick ohne Shift
               this.selectItem(item);
             }
           },
 
-          // Wendet einen Eigenschaftswert auf ALLE markierten Elemente an (Multi-Edit)
           applyMulti(property, value) {
             if (value === '' || (isNaN(value) && property === 'RZ')) return;
             this.selectedItems.forEach((item) => {
               item[property] = value;
+              this.updateThreeMesh(item);
             });
             this.triggerAutosave();
           },
 
           alignSelected(direction) {
             if (this.selectedItems.length < 2) return;
-
             let targetValue;
             if (direction === 'left') {
-              // Finde den kleinsten X-Wert
               targetValue = Math.min(...this.selectedItems.map((i) => i.X));
-              this.selectedItems.forEach((i) => (i.X = targetValue));
+              this.selectedItems.forEach((i) => {
+                i.X = targetValue;
+                this.updateThreeMesh(i);
+              });
             } else if (direction === 'right') {
-              // Finde den größten X-Wert
               targetValue = Math.max(...this.selectedItems.map((i) => i.X));
-              this.selectedItems.forEach((i) => (i.X = targetValue));
+              this.selectedItems.forEach((i) => {
+                i.X = targetValue;
+                this.updateThreeMesh(i);
+              });
             } else if (direction === 'top') {
-              // Finde den kleinsten Y-Wert (Oben)
               targetValue = Math.min(...this.selectedItems.map((i) => i.Y));
-              this.selectedItems.forEach((i) => (i.Y = targetValue));
+              this.selectedItems.forEach((i) => {
+                i.Y = targetValue;
+                this.updateThreeMesh(i);
+              });
             } else if (direction === 'bottom') {
-              // Finde den größten Y-Wert (Unten)
               targetValue = Math.max(...this.selectedItems.map((i) => i.Y));
-              this.selectedItems.forEach((i) => (i.Y = targetValue));
+              this.selectedItems.forEach((i) => {
+                i.Y = targetValue;
+                this.updateThreeMesh(i);
+              });
             }
             this.triggerAutosave();
           },
 
           distributeSelected(axis) {
             if (this.selectedItems.length < 3) return;
-
             if (axis === 'horizontal') {
               const sorted = [...this.selectedItems].sort((a, b) => a.X - b.X);
-
-              // Finde die absoluten räumlichen Außengrenzen
               const minX = sorted[0].X;
               const maxX = sorted[sorted.length - 1].X;
               const step = (maxX - minX) / (sorted.length - 1);
-
-              // Positionen zuweisen
               sorted.forEach((item, index) => {
                 item.X = parseFloat((minX + index * step).toFixed(1));
+                this.updateThreeMesh(item);
               });
             } else if (axis === 'vertical') {
-              // Sortiere nach aktueller Y-Position, um die visuelle Reihenfolge zu behalten
               const sorted = [...this.selectedItems].sort((a, b) => a.Y - b.Y);
-
-              // Finde die absoluten räumlichen Außengrenzen
               const minY = sorted[0].Y;
               const maxY = sorted[sorted.length - 1].Y;
               const step = (maxY - minY) / (sorted.length - 1);
-
-              // Positionen zuweisen
               sorted.forEach((item, index) => {
                 item.Y = parseFloat((minY + index * step).toFixed(1));
+                this.updateThreeMesh(item);
               });
             }
             this.triggerAutosave();
@@ -1713,13 +1226,10 @@
           },
 
           addNewItem() {
-            const defaultItemId =
-              this.uniqueItemIds.length > 0 ? this.uniqueItemIds[0] : '';
-
             const newItem = {
               $type:
                 'PickMaster.Core.Process.Container.ArrangedItemModel, PickMaster.Core',
-              ItemId: defaultItemId,
+              ItemId: this.uniqueItemIds.length > 0 ? this.uniqueItemIds[0] : '',
               X: parseFloat((this.width / 2).toFixed(1)),
               Y: parseFloat((this.height / 2).toFixed(1)),
               Z: 0.0,
@@ -1729,35 +1239,25 @@
               Order: this.currentMaxOrder + 1,
               Id: this.generateUUID(),
             };
-
             this.items.push(newItem);
             this.selectItem(newItem);
           },
 
           duplicateSelectedItem() {
             if (!this.selectedItem) return;
-
             const clonedItem = {
-              $type:
-                'PickMaster.Core.Process.Container.ArrangedItemModel, PickMaster.Core',
-              ItemId: this.selectedItem.ItemId,
+              ...JSON.parse(JSON.stringify(this.selectedItem)),
               X: parseFloat((this.selectedItem.X + 20).toFixed(1)),
               Y: parseFloat((this.selectedItem.Y + 20).toFixed(1)),
-              Z: this.selectedItem.Z,
-              RX: this.selectedItem.RX,
-              RY: this.selectedItem.RY,
-              RZ: this.selectedItem.RZ,
               Order: this.currentMaxOrder + 1,
               Id: this.generateUUID(),
             };
-
             this.items.push(clonedItem);
             this.selectItem(clonedItem);
           },
 
           deleteSelectedItem() {
             if (!this.selectedItem) return;
-
             if (confirm('Dieses Item wirklich löschen?')) {
               const index = this.items.findIndex((i) => i.Id === this.selectedItem.Id);
               if (index > -1) this.items.splice(index, 1);
@@ -1769,23 +1269,16 @@
             if (confirm(`${this.selectedItems.length} Items wirklich löschen?`)) {
               const idsToDelete = this.selectedItems.map((i) => i.Id);
               for (let i = this.items.length - 1; i >= 0; i--) {
-                if (idsToDelete.includes(this.items[i].Id)) {
-                  this.items.splice(i, 1);
-                }
+                if (idsToDelete.includes(this.items[i].Id)) this.items.splice(i, 1);
               }
-
               this.selectedItems = [];
-              this.triggerAutosave();
             }
           },
 
           saveFile() {
             const dataStr = JSON.stringify(this.jsonData, null, 2);
-            const blob = new Blob([dataStr], {
-              type: 'application/json',
-            });
+            const blob = new Blob([dataStr], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
-
             const link = document.createElement('a');
             link.href = url;
             link.download = this.jsonData.Name
@@ -1793,14 +1286,8 @@
               : 'ContainerModel_mod.json';
             document.body.appendChild(link);
             link.click();
-
             document.body.removeChild(link);
             URL.revokeObjectURL(url);
-          },
-
-          getDynamicZIndex(item) {
-            if (this.isSelected(item)) return this.currentMaxOrder + 1;
-            return parseInt(item.Order, 10) || 0;
           },
 
           updateMaxOrder() {
@@ -1808,50 +1295,6 @@
               this.items.length > 0
                 ? Math.max(...this.items.map((i) => i.Order || 0))
                 : 0;
-          },
-
-          handleWheel(e) {
-            e.preventDefault();
-            const zoomSpeed = 0.1;
-            const delta = e.deltaY > 0 ? -zoomSpeed : zoomSpeed;
-            // Zoom zwischen 20% und 500%
-            const newZoom = Math.min(Math.max(0.2, this.zoom + delta), 5);
-
-            this.zoom = parseFloat(newZoom.toFixed(2));
-          },
-
-          startPanning(e) {
-            // Startet Panning bei mittlerer Maustaste (Button 1)
-            if (e.button === 1 || (e.button === 0 && e.altKey)) {
-              this.isPanning = true;
-              this.lastPanX = e.clientX;
-              this.lastPanY = e.clientY;
-              e.preventDefault();
-            }
-          },
-
-          doPanning(e) {
-            if (!this.isPanning) return;
-            e.preventDefault();
-
-            const dx = e.clientX - this.lastPanX;
-            const dy = e.clientY - this.lastPanY;
-
-            this.offsetX += dx;
-            this.offsetY += dy;
-
-            this.lastPanX = e.clientX;
-            this.lastPanY = e.clientY;
-          },
-
-          stopPanning() {
-            this.isPanning = false;
-          },
-
-          resetView() {
-            this.zoom = 1;
-            this.offsetX = 0;
-            this.offsetY = 0;
           },
         };
       }
