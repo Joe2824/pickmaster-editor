@@ -1675,26 +1675,28 @@
           distributeSelected(axis) {
             if (this.selectedItems.length < 3) return;
 
-            const sorted = [...this.selectedItems].sort(
-              (a, b) => (a.Order || 0) - (b.Order || 0),
-            );
-
             if (axis === 'horizontal') {
+              const sorted = [...this.selectedItems].sort((a, b) => a.X - b.X);
+
               // Finde die absoluten räumlichen Außengrenzen
-              const minX = Math.min(...this.selectedItems.map((i) => i.X));
-              const maxX = Math.max(...this.selectedItems.map((i) => i.X));
+              const minX = sorted[0].X;
+              const maxX = sorted[sorted.length - 1].X;
               const step = (maxX - minX) / (sorted.length - 1);
 
-              // Positionen in der perfekten Reihenfolge zuweisen
+              // Positionen zuweisen
               sorted.forEach((item, index) => {
                 item.X = parseFloat((minX + index * step).toFixed(1));
               });
             } else if (axis === 'vertical') {
+              // Sortiere nach aktueller Y-Position, um die visuelle Reihenfolge zu behalten
+              const sorted = [...this.selectedItems].sort((a, b) => a.Y - b.Y);
+
               // Finde die absoluten räumlichen Außengrenzen
-              const minY = Math.min(...this.selectedItems.map((i) => i.Y));
-              const maxY = Math.max(...this.selectedItems.map((i) => i.Y));
+              const minY = sorted[0].Y;
+              const maxY = sorted[sorted.length - 1].Y;
               const step = (maxY - minY) / (sorted.length - 1);
 
+              // Positionen zuweisen
               sorted.forEach((item, index) => {
                 item.Y = parseFloat((minY + index * step).toFixed(1));
               });
